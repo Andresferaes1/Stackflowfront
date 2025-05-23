@@ -4,6 +4,7 @@ import LoginView from '../views/LoginView.vue';
 import RegisterView from '@/views/RegisterView.vue';
 import DashboardView from '@/views/DashboardView.vue';
 
+
 // Creamos el router
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,12 +41,40 @@ const router = createRouter({
         {     
           path: 'clientes/nuevo',
           name: 'client-create',
-          component: () => import('../views/clients/ClientCreateView.vue') 
-          }            
+          component: () => import('../views/clients/ClientCreateView.vue')
+          }, 
+          {
+            path: 'products/manage-stock',
+            name: 'stock-management',
+            component: () => import('../views/products/StockManagementView.vue')
+          },
+          {
+            path: 'products/upload',
+            name: 'csv-upload',
+            component: () => import('../views/products/CsvUploadView.vue')
+          },
+          {
+            path: 'products/read',
+            name: 'product-read',
+            component: () => import('../views/products/ProductReadView.vue'),
+          },
+          {
+            path: 'products/detail/:id',
+            name: 'product-detail',
+            component: () => import('../views/products/ProductDetailView.vue'),
+          },
+          {
+            path: 'cotizacion/nueva',
+            name: 'quotation-create',
+            component: () => import('../views/quotations/QuotationCreateView.vue'),
+          },
+                    
           ]
         
         },
 
+        
+        
     // NOTA: Las rutas hijas para clientes, productos y cotizaciones están comentadas abajo.
     // Puedes moverlas aquí o habilitarlas una por una si ya existen los archivos.
 

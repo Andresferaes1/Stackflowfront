@@ -76,7 +76,6 @@ const menus = ref({
   clientes: false,
   productos: false,
   cotizacion: false,
-  cantidades: false,
   stackflow: false,
 })
 
@@ -101,12 +100,12 @@ const handleClickOutside = (event) => {
 
 const labels = {
   clientes: 'Clientes',
-  productos: 'Mercancía',
+  productos: 'Productos',
   cotizacion: 'Cotización',
-  cantidades: 'Cantidades',
   stackflow: 'StackFlow',
 }
 
+//botones barra de dashboard
 const options = {
   clientes: [
     { text: 'Nuevo', path: '/dashboard/clientes/nuevo' },
@@ -115,19 +114,16 @@ const options = {
     { text: 'Leer', path: '/clientes/leer' },
   ],
   productos: [
-    { text: 'Nuevo', path: '/productos/nuevo' },
-    { text: 'Editar', path: '/productos/editar' },
+    { text: 'Gestionar Stock', path: '/dashboard/products/manage-stock' },
+    { text: 'Cargar CSV', path: '/dashboard/products/upload' },
     { text: 'Eliminar', path: '/productos/eliminar' },
-    { text: 'Consultar', path: '/productos/consultar' },
+    { text: 'Consultar', path: '/dashboard/products/read' },
   ],
   cotizacion: [
-    { text: 'Nueva', path: '/cotizacion/nueva' },
-    { text: 'Historial', path: '/cotizacion/historial' },
+    { text: 'Nueva', path: '/dashboard/cotizacion/nueva' },
+    { text: 'Historial', path: '/cotizacion/historial' }
   ],
-  cantidades: [
-    { text: 'Inventario', path: '/cantidades/inventario' },
-    { text: 'Disponibilidad', path: '/cantidades/disponibilidad' },
-  ],
+  
   stackflow: [
     { text: 'Sistema', path: '/stackflow/info' },
   ],
@@ -370,14 +366,18 @@ html, body {
 .workspace-area {
   width: 100%;
   max-width: 1200px;
-  margin: 0.3rem auto;
-  padding: 2rem;
-  background-color: #ffffff;
-  border: 1px solid #ccc;
+  margin: 0 auto; /* Centra el contenedor */
+  padding: 1rem;
+  background-color: var(--background-white);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-light);
   min-height: 400px;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 /* Estilos para el indicador de carga */
