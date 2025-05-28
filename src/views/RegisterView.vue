@@ -126,9 +126,13 @@ const handleRegister = async () => {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: right;
   padding: 20px;
-  background-color: #f5f5f5;
+  background-image: url('@/assets/Registrofondo.png'); /* Ruta de la imagen */
+  
+  background-position: center; /* Centra la imagen */
+  background-repeat: no-repeat; /* Evita que la imagen se repita */
+
 }
 
 .register-view {
@@ -146,6 +150,7 @@ const handleRegister = async () => {
   padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  opacity: 0.9;
 }
 
 h2 {

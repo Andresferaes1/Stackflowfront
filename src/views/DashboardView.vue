@@ -2,8 +2,10 @@
   <div class="dashboard">
     <!-- Encabezado independiente: logo y bienvenida -->
     <header class="header">
-      <img src="@/assets/logo.png" class="logo" alt="Logo de StackFlow" />
-      <h1>Bienvenido, {{ userName }} !!</h1>
+      <div class="header-content">
+        <img src="@/assets/logo.png" class="logo" alt="Logo de StackFlow" />
+        <h1>Bienvenido, {{ userName }} !!</h1>
+      </div>
     </header>
 
     <!-- Barra de navegación -->
@@ -77,6 +79,7 @@ const menus = ref({
   productos: false,
   cotizacion: false,
   stackflow: false,
+  cuenta: false,
 })
 
 // Handler para cerrar los menús cuando se hace clic afuera
@@ -103,6 +106,7 @@ const labels = {
   productos: 'Productos',
   cotizacion: 'Cotización',
   stackflow: 'StackFlow',
+  cuenta: 'Mi Cuenta',
 }
 
 //botones barra de dashboard
@@ -126,6 +130,9 @@ const options = {
   
   stackflow: [
     { text: 'Sistema', path: '/stackflow/info' },
+  ],
+  cuenta: [  // Nueva opción
+    { text: 'Mi Perfil', path: '/dashboard/user' },
   ],
 }
 
@@ -173,7 +180,14 @@ function logout() {
 }
 
 onMounted(() => {
-  // Cargar datos del usuario
+  // Primero verificar el token
+  const token = localStorage.getItem('token')
+  if (!token) {
+    router.push('/login')
+    return
+  }
+
+  // Si hay token, entonces cargar datos del usuario
   try {
     const user = localStorage.getItem('user')
     if (user) {
@@ -181,13 +195,6 @@ onMounted(() => {
       userName.value = userData.name || 'Usuario'
     } else {
       userName.value = 'Usuario'
-      
-      // Si no hay datos de usuario pero sí hay token, redirigir al login
-      const token = localStorage.getItem('token')
-      if (!token) {
-        router.push('/login')
-        return
-      }
     }
   } catch (error) {
     console.error('Error al obtener datos de usuario:', error)
@@ -227,7 +234,7 @@ html, body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  background-color: #f9f9f9;
+  background-color: var(--background-light);
   font-family: sans-serif;
 }
 
@@ -240,30 +247,39 @@ html, body {
   min-height: 100vh;
 }
 
-/* Encabezado con logo y mensaje (centrado) */
+/* Header y Logo */
 .header {
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1rem 1rem 0.5rem;
+  padding: 0.5rem 1rem;
   background-color: white;
+  background-image: url('@/assets/Fondometal.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  justify-content: center; 
+  display:flex
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 20px;
+
 }
 
 .logo {
-  width: 90px;
+  width: 65px;
   height: auto;
-  margin-bottom: 0.05rem;
 }
 
 .header h1 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: bold;
-  color: #003366;
-  text-align: center;
+  color: var(--primary-color);
 }
 
 /* Barra de navegación */
@@ -289,6 +305,7 @@ html, body {
   margin: 0;
 }
 
+/* Botones principales y logout */
 .main-button,
 .logout-button {
   background-color: #d0e229;
@@ -303,12 +320,11 @@ html, body {
 }
 
 .logout-button {
-  background-color: #e74c3c;
+  background-color: var(--danger-color);
   margin-left: auto;
 }
 
-.main-button:hover,
-.logout-button:hover {
+.main-button:hover {
   background-color: #0fac21;
 }
 
@@ -322,6 +338,7 @@ html, body {
   outline-offset: 2px;
 }
 
+/* Menú dropdown */
 .dropdown {
   position: relative;
 }
@@ -331,9 +348,9 @@ html, body {
   top: 100%;
   left: 0;
   background: white;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-medium);
   min-width: 160px;
   z-index: 1000;
   display: flex;
@@ -366,7 +383,7 @@ html, body {
 .workspace-area {
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto; /* Centra el contenedor */
+  margin: 0 auto;
   padding: 1rem;
   background-color: var(--background-white);
   border: 1px solid var(--border-color);
@@ -380,7 +397,7 @@ html, body {
   align-items: center;
 }
 
-/* Estilos para el indicador de carga */
+/* Loader */
 .loading {
   display: flex;
   flex-direction: column;
@@ -395,7 +412,7 @@ html, body {
   height: 40px;
   border-radius: 50%;
   border: 3px solid rgba(0, 51, 102, 0.2);
-  border-top-color: #003366;
+  border-top-color: var(--primary-color);
   animation: spin 1s linear infinite;
 }
 
@@ -405,7 +422,7 @@ html, body {
   }
 }
 
-/* Responsive ajustes */
+/* Responsive */
 @media (max-width: 768px) {
   .navbar {
     flex-direction: column;
@@ -433,13 +450,20 @@ html, body {
   }
   
   .workspace-area {
-    padding: 1.5rem 1rem;
+    padding: 1rem;
   }
 
-  .header {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+  .header-content {
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .logo {
+    width: 50px;
+  }
+
+  .header h1 {
+    font-size: 1.2rem;
   }
 }
 </style>

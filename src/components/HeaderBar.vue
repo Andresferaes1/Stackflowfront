@@ -18,6 +18,7 @@
       <RouterLink to="/">Inicio</RouterLink>
       <RouterLink to="/about">Acerca</RouterLink>
       <RouterLink to="/login">Login</RouterLink>
+      <RouterLink to="/register" class="register-button">Registrarse</RouterLink>
     </nav>
   </header>
 </template>
@@ -76,6 +77,34 @@ import { RouterLink } from 'vue-router';
 
 .nav-links a.router-link-exact-active {
   text-decoration: underline;
+}
+.nav-links {
+  display: flex;
+  gap: 16px;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.nav-links a.router-link-exact-active {
+  text-decoration: underline;
+}
+
+.register-button {
+  background-color: #0fac21; /* Color azul */
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.register-button:hover {
+  background-color: #eadb13; /* Azul más oscuro al pasar el mouse */
 }
 </style>
 

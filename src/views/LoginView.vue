@@ -8,22 +8,36 @@
       <!-- Formulario de login -->
       <!-- @submit.prevent evita que el formulario recargue la página -->
       <form @submit.prevent="handleLogin">
+        
         <!-- Campo de nombre de usuario -->
-        <input
-          type="text"
-          v-model="username"
-          placeholder="Usuario"
-          required
-        />
+        <div class="form-group">
+          <label for="username">Correo electrónico</label>
+          <input
+            id="username"
+            type="text"
+            v-model="username"
+            placeholder="Usuario"
+            required
+          />
+        </div>
   
         <!-- Campo de contraseña -->
-        <input
-          type="password"
-          v-model="password"
-          placeholder="Contraseña"
-          required
-        />
-  
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input
+            id="password"
+            type="password"
+            v-model="password"
+            placeholder="Contraseña"
+            required
+          />
+        </div>
+        <!-- Enlace para recuperación de contraseña -->
+        <div class="forgot-password">
+          <a href="#" @click.prevent="handleForgotPassword">
+            ¿Olvidó su contraseña?
+          </a>
+        </div>
         <!-- Botón para enviar el formulario -->
         <button type="submit">Entrar</button>
         <!-- Botón de registro -->
@@ -31,14 +45,21 @@
   
         <!-- Mensaje de error si el login falla -->
         <p v-if="error" class="error-message">{{ error }}</p>
+            <!-- Sección de aceptación de términos y condiciones -->
+        <div class="terms">
+          <p>
+            Al iniciar sesión, aceptas nuestros 
+            <a href="#" @click.prevent="showTerms">términos y condiciones</a>
+          </p>
+        </div>
       </form>
     </div>
   </div>
 </template>
 
 <script setup>
-// Composición de Vue 3
-import RegisterButton from '@/components/RegisterButton.vue'
+// Importación de componentes y librerías necesarias
+import RegisterButton from '@/components/RegisterButton.vue'; // Botón de registro
 import { ref } from 'vue';              // Importa ref para variables reactivas
 import { useRouter } from 'vue-router'; // Importa el router para hacer redirecciones
 import axios from 'axios';              // Cliente HTTP para enviar peticiones al backend
@@ -54,28 +75,43 @@ const router = useRouter();
 // Función que se ejecuta al enviar el formulario
 const handleLogin = async () => {
   try {
-    // Enviamos los datos al backend
     const response = await axios.post('http://localhost:8000/login', {
       email: username.value,
-      password: password.value
+      password: password.value,
     });
 
-    // Si todo sale bien, recibimos un token (JWT)
-    const token = response.data.access_token;
+    // Extraer token y datos de usuario
+    const { access_token, user } = response.data;
 
-    // Guardamos el token en el almacenamiento local del navegador
-    localStorage.setItem('token', token);
-
-    // Redireccionamos al usuario al dashboard
-    router.push('/dashboard');
+    if (access_token) {
+      // Guardar token y datos de usuario
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('user', JSON.stringify(user || { name: username.value }));
+      
+      // Limpiar cualquier error previo
+      error.value = null;
+      
+      // Redireccionar al dashboard
+      await router.push('/dashboard');
+    } else {
+      throw new Error('No se recibió un token válido');
+    }
   } catch (err) {
-    // Si ocurre un error (credenciales inválidas o fallo de red), lo mostramos
     error.value = 'Credenciales incorrectas o error de conexión.';
-    console.error(err);
+    console.error('Error de login:', err);
   }
 };
-</script>
 
+// Método para manejar la recuperación de contraseña
+const handleForgotPassword = () => {
+  router.push('/forgot-password');
+};
+
+// Método para mostrar los términos y condiciones
+const showTerms = () => {
+  router.push('/terms');
+};
+</script>
 <style scoped>
 /* Reset básico para evitar problemas de margen y padding */
 * {
@@ -97,8 +133,6 @@ const handleLogin = async () => {
   background-position: center; /* Centra la imagen */
   background-repeat: no-repeat; /* Evita que la imagen se repita */
 }
-
-
 
 /* Estilo principal del contenedor */
 .login-container {
@@ -176,5 +210,54 @@ button:hover {
   .login-container {
     padding: 1.5rem;
   }
+}
+/* Estilos para el grupo de formulario */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+/* Estilos para las etiquetas de los campos */
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Contenedor del enlace de recuperación de contraseña */
+.forgot-password {
+  text-align: right;
+  margin-bottom: 1rem;
+}
+
+/* Estilo del enlace de recuperación de contraseña */
+.forgot-password a {
+  color: #2514d5;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+/* Efecto hover para el enlace */
+.forgot-password a:hover {
+  text-decoration: underline;
+}
+
+/* Contenedor de términos y condiciones */
+.terms {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* Estilo para los enlaces en términos */
+.terms a {
+  color: #2514d5;
+  text-decoration: none;
+}
+
+/* Efecto hover para enlaces de términos */
+.terms a:hover {
+  text-decoration: underline;
 }
 </style>
