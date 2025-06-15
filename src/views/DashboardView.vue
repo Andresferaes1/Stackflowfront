@@ -1,3 +1,4 @@
+<!-- filepath: src/views/DashboardView.vue -->
 <template>
   <div class="dashboard">
     <!-- Encabezado independiente: logo y bienvenida -->
@@ -8,40 +9,55 @@
       </div>
     </header>
 
-    <!-- Barra de navegación -->
+    <!-- Barra de navegación mejorada -->
     <div class="navbar-wrapper">
       <nav class="navbar" aria-label="Navegación principal">
-        <div
-          class="dropdown"
-          v-for="(items, key) in options"
-          :key="key"
-          @mouseenter="showMenu(key)"
-          @mouseleave="hideMenu(key)"
-          @keydown.escape="hideMenu(key)"
-          @focusin="showMenu(key)"
-        >
-          <button
-            class="main-button"
-            :aria-expanded="menus[key]"
-            :aria-controls="`dropdown-${key}`"
-          >
-            {{ labels[key] }}
-          </button>
-          <div class="dropdown-menu" v-if="menus[key]" :id="`dropdown-${key}`" role="menu">
-            <button
-              v-for="item in items"
-              :key="item.text"
-              @click="navigate(item.path)"
-              role="menuitem"
-              tabindex="0"
+        <div class="navbar-container">
+          <div class="navbar-left">
+            <div
+              class="dropdown"
+              v-for="(items, key) in options"
+              :key="key"
+              @mouseenter="showMenu(key)"
+              @mouseleave="hideMenu(key)"
+              @keydown.escape="hideMenu(key)"
+              @focusin="showMenu(key)"
             >
-              {{ item.text }}
+              <button
+                class="main-button"
+                :class="{ 'menu-active': menus[key] }"
+                :aria-expanded="menus[key]"
+                :aria-controls="`dropdown-${key}`"
+              >
+                <span class="button-content">
+                  <span class="button-icon">{{ getIcon(key) }}</span>
+                  <span class="button-text">{{ labels[key] }}</span>
+                </span>
+                <span class="button-arrow" :class="{ 'arrow-up': menus[key] }">▼</span>
+              </button>
+              <div class="dropdown-menu" v-if="menus[key]" :id="`dropdown-${key}`" role="menu">
+                <button
+                  v-for="item in items"
+                  :key="item.text"
+                  @click="navigate(item.path)"
+                  role="menuitem"
+                  tabindex="0"
+                  class="dropdown-item"
+                >
+                  <span class="dropdown-icon">•</span>
+                  <span class="dropdown-text">{{ item.text }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="navbar-right">
+            <button class="logout-button" @click="logout" aria-label="Cerrar sesión">
+              <span class="logout-icon">🚪</span>
+              <span class="logout-text">Cerrar Sesión</span>
             </button>
           </div>
         </div>
-        <button class="logout-button" @click="logout" aria-label="Cerrar sesión">
-          Cerrar Sesión
-        </button>
       </nav>
     </div>
 
@@ -95,9 +111,21 @@ const handleClickOutside = (event) => {
 const labels = {
   clientes: 'Clientes',
   productos: 'Productos',
-  cotizacion: 'Ventas', 
+  cotizacion: 'Ventas',
   stackflow: 'Análisis',
   cuenta: 'Mi Cuenta',
+}
+
+// Iconos para cada sección
+const getIcon = (key) => {
+  const icons = {
+    clientes: '👥',
+    productos: '📦',
+    cotizacion: '💰',
+    stackflow: '📊',
+    cuenta: '👤',
+  }
+  return icons[key] || '📋'
 }
 
 //botones barra de dashboard
@@ -216,6 +244,10 @@ onBeforeUnmount(() => {
   --background-white: #ffffff;
   --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-medium: 0 2px 6px rgba(0, 0, 0, 0.2);
+  --navbar-gradient: linear-gradient(145deg, #e6a146, #d29750, #be8540);
+  --button-gradient: linear-gradient(145deg, #dce836, #d0e229, #bbcc1f);
+  --button-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  --button-shadow-active: 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Reseteos y configuración base */
@@ -229,12 +261,12 @@ body {
   padding: 0;
   overflow-x: hidden;
   background-color: var(--background-light);
-  font-family: sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .dashboard {
-  width: 90vw;
-  margin: 0 auto;
+  width: 100vw;
+  margin: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -244,9 +276,7 @@ body {
 /* Header y Logo */
 .header {
   width: 100%;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 2rem;
   background-color: white;
   background-image: url('@/assets/Fondometal.png');
   background-size: cover;
@@ -254,18 +284,22 @@ body {
   background-repeat: no-repeat;
   justify-content: center;
   display: flex;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header-content {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center; /* ✅ CENTRADO COMPLETO */
   gap: 20px;
+  width: 100%;
+  max-width: 1400px;
 }
 
 .logo {
   width: 65px;
   height: auto;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .header h1 {
@@ -273,116 +307,259 @@ body {
   font-size: 1.5rem;
   font-weight: bold;
   color: var(--primary-color);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* Barra de navegación */
+/* Barra de navegación mejorada */
 .navbar-wrapper {
   width: 100%;
-  border-top: 2px solid #000;
-  border-bottom: 2px solid #000;
-  background-color: #d29750;
+  border-top: 3px solid #000;
+  border-bottom: 3px solid #000;
+  background: var(--navbar-gradient);
   margin: 0;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .navbar {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  flex-wrap: wrap;
-  gap: 0.75rem;
   width: 100%;
+  padding: 0;
   margin: 0;
 }
 
-/* Botones principales y logout */
-.main-button,
-.logout-button {
-  background-color: #d0e229;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.2s;
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 2rem;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.logout-button {
-  background-color: var(--danger-color);
-  margin-left: auto;
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+}
+
+/* Botones principales mejorados */
+.main-button {
+  background: var(--button-gradient);
+  color: #2c3e50;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  box-shadow: var(--button-shadow);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 120px;
+  font-size: 0.9rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .main-button:hover {
-  background-color: #0fac21;
+  background: linear-gradient(145deg, #e8f441, #dce836, #c7d324);
+  transform: translateY(-1px);
+  box-shadow:
+    0 6px 12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.main-button:active,
+.main-button.menu-active {
+  transform: translateY(1px);
+  box-shadow: var(--button-shadow-active);
+  background: linear-gradient(145deg, #c7d324, #bbcc1f, #a8b91c);
+}
+
+.button-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.button-icon {
+  font-size: 1.1rem;
+  filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.2));
+}
+
+.button-text {
+  font-weight: 600;
+  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+.button-arrow {
+  font-size: 0.7rem;
+  transition: transform 0.3s ease;
+  margin-left: 0.3rem;
+  color: #2c3e50;
+}
+
+.button-arrow.arrow-up {
+  transform: rotate(180deg);
+}
+
+/* Botón de logout mejorado */
+.logout-button {
+  background: linear-gradient(145deg, #e74c3c, #c0392b, #a93226);
+  color: white;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  box-shadow:
+    0 4px 8px rgba(231, 76, 60, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .logout-button:hover {
-  background-color: #c0392b;
+  background: linear-gradient(145deg, #ec7063, #e74c3c, #d35400);
+  transform: translateY(-1px);
+  box-shadow:
+    0 6px 12px rgba(231, 76, 60, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.logout-button:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 2px 4px rgba(231, 76, 60, 0.3),
+    inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logout-icon {
+  font-size: 1.1rem;
+  filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.3));
+}
+
+.logout-text {
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 .main-button:focus,
 .logout-button:focus {
-  outline: 2px solid white;
+  outline: 3px solid rgba(255, 255, 255, 0.6);
   outline-offset: 2px;
 }
 
-/* Menú dropdown */
+/* Menú dropdown mejorado */
 .dropdown {
   position: relative;
 }
 
 .dropdown-menu {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 5px);
   left: 0;
-  background: white;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  box-shadow: var(--shadow-medium);
-  min-width: 160px;
-  z-index: 1000;
+  background: linear-gradient(145deg, #ffffff, #f8f9fa, #e9ecef);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.15),
+    0 4px 10px rgba(0, 0, 0, 0.1);
+  min-width: 180px;
+  z-index: 2000;
   display: flex;
   flex-direction: column;
-  padding: 0.25rem 0;
+  padding: 0.5rem 0;
+  backdrop-filter: blur(10px);
+  overflow: hidden;
 }
 
-.dropdown-menu button {
+.dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #ffffff;
+  filter: drop-shadow(0 -2px 2px rgba(0, 0, 0, 0.1));
+}
+
+.dropdown-item {
   width: 100%;
-  padding: 0.5rem 1rem;
-  background-color: transparent;
+  padding: 0.75rem 1.2rem;
+  background: transparent;
   border: none;
   text-align: left;
   cursor: pointer;
-  font-size: 0.875rem;
-  transition: background-color 0.15s;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: #2c3e50;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.dropdown-menu button:hover,
-.dropdown-menu button:focus {
-  background-color: #eee;
+.dropdown-item:last-child {
+  border-bottom: none;
 }
 
-.dropdown-menu button:focus {
-  outline: 2px solid #0fac21;
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background: linear-gradient(145deg, #f8f9fa, #e9ecef, #dee2e6);
+  color: var(--primary-color);
+  transform: translateX(3px);
+  box-shadow: inset 3px 0 0 var(--primary-color);
+}
+
+.dropdown-item:focus {
+  outline: 2px solid var(--primary-color);
   outline-offset: -2px;
+}
+
+.dropdown-icon {
+  color: var(--primary-color);
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.dropdown-text {
+  flex: 1;
 }
 
 /* Área de trabajo */
 .workspace-area {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1rem;
-  background-color: var(--background-white);
+  max-width: 1400px;
+  margin: 1.5rem auto;
+  padding: 2rem;
+  background: linear-gradient(145deg, #ffffff, #f8f9fa);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  box-shadow: var(--shadow-light);
-  min-height: 400px;
+  border-radius: 12px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 2px 10px rgba(0, 0, 0, 0.04);
+  min-height: 500px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -390,23 +567,31 @@ body {
   align-items: center;
 }
 
-/* Loader */
+/* Loader mejorado */
 .loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
-  min-height: 200px;
+  min-height: 300px;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  border: 3px solid rgba(0, 51, 102, 0.2);
+  border: 4px solid rgba(0, 51, 102, 0.2);
   border-top-color: var(--primary-color);
-  animation: spin 1s linear infinite;
+  animation: spin 1s ease-in-out infinite;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.loading p {
+  margin-top: 1rem;
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 1.1rem;
 }
 
 @keyframes spin {
@@ -415,40 +600,69 @@ body {
   }
 }
 
-/* Responsive */
+/* Responsive mejorado */
+@media (max-width: 1200px) {
+  .navbar-container {
+    padding: 0.75rem 1rem;
+  }
+
+  .workspace-area {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+}
+
 @media (max-width: 768px) {
-  .navbar {
+  .navbar-container {
     flex-direction: column;
-    align-items: stretch;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .navbar-left {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .navbar-right {
+    width: 100%;
+    justify-content: center;
   }
 
   .main-button,
   .logout-button {
-    width: 100%;
-    padding: 0.75rem;
-    text-align: center;
-  }
-
-  .logout-button {
-    margin-left: 0;
-    margin-top: 0.5rem;
+    min-width: 100px;
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
   }
 
   .dropdown {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .main-button {
     width: 100%;
+    justify-content: center;
   }
 
   .dropdown-menu {
     width: 100%;
+    min-width: unset;
   }
 
   .workspace-area {
+    margin: 0.5rem;
     padding: 1rem;
+    border-radius: 8px;
   }
 
   .header-content {
+    padding: 0 1rem;
     justify-content: center;
-    gap: 10px;
+    gap: 15px;
   }
 
   .logo {
@@ -457,6 +671,42 @@ body {
 
   .header h1 {
     font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-left {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dropdown {
+    width: 100%;
+  }
+
+  .main-button {
+    width: 100%;
+    margin-bottom: 0.25rem;
+  }
+
+  .button-content {
+    justify-content: center;
+  }
+
+  .header {
+    padding: 0.5rem 1rem;
+  }
+
+  .header-content {
+    gap: 10px;
+  }
+
+  .logo {
+    width: 40px;
+  }
+
+  .header h1 {
+    font-size: 1rem;
   }
 }
 </style>
