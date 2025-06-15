@@ -169,7 +169,9 @@ function navigate(path) {
 function logout() {
   try {
     // Limpiar datos de sesión
-    localStorage.removeItem('token')
+    // Eliminar token JWT de autenticación
+    localStorage.removeItem('access_token')
+    // Eliminar datos del usuario
     localStorage.removeItem('user')
     
     // Redireccionar al login
@@ -181,8 +183,9 @@ function logout() {
 
 onMounted(() => {
   // Primero verificar el token
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('access_token')
   if (!token) {
+    // Si no hay token, redireccionar al login
     router.push('/login')
     return
   }
@@ -463,8 +466,7 @@ html, body {
   }
 
   .header h1 {
-    font-size: 1.2rem;
-  }
+    font-size: 1.2rem  }
 }
 </style>
   

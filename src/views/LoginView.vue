@@ -85,7 +85,7 @@ const handleLogin = async () => {
 
     if (access_token) {
       // Guardar token y datos de usuario
-      localStorage.setItem('token', access_token);
+      localStorage.setItem('access_token', access_token);
       localStorage.setItem('user', JSON.stringify(user || { name: username.value }));
       
       // Limpiar cualquier error previo

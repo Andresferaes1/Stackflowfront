@@ -87,7 +87,7 @@ const router = createRouter({
 
 // Middleware para proteger rutas que requieren autenticación
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = !!localStorage.getItem('token'); // Cambiado a 'token'
+  const isAuthenticated = !!localStorage.getItem('access_token'); // Cambiado a 'token'
   
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login');
