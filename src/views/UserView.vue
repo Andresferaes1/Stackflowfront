@@ -1,4 +1,3 @@
-<!-- filepath: src/views/UserView.vue -->
 <template>
   <div class="user-dashboard">
     <!-- Mostrar spinner de carga -->
@@ -107,34 +106,46 @@
           <h3>✏️ Editar Perfil</h3>
           <button @click="closeEditMode" class="close-button">✕</button>
         </div>
-        
+
         <form @submit.prevent="saveProfile" class="edit-form">
           <!-- Información de la empresa -->
           <div class="form-group">
             <label>🏢 Nombre de la empresa:</label>
-            <input v-model="editData.company_name" type="text" placeholder="Ej: Tech Solutions S.A.S" />
+            <input
+              v-model="editData.company_name"
+              type="text"
+              placeholder="Ej: Tech Solutions S.A.S"
+            />
           </div>
-          
+
           <div class="form-group">
             <label>📍 Dirección de la empresa:</label>
-            <input v-model="editData.company_address" type="text" placeholder="Ej: Calle 123 #45-67" />
+            <input
+              v-model="editData.company_address"
+              type="text"
+              placeholder="Ej: Calle 123 #45-67"
+            />
           </div>
-          
+
           <div class="form-group">
             <label>📞 Teléfono:</label>
             <input v-model="editData.phone" type="tel" placeholder="Ej: +57 300 123 4567" />
           </div>
-          
+
           <div class="form-group">
             <label>📧 Email de recuperación:</label>
-            <input v-model="editData.recovery_email" type="email" placeholder="Ej: backup@email.com" />
+            <input
+              v-model="editData.recovery_email"
+              type="email"
+              placeholder="Ej: backup@email.com"
+            />
           </div>
-          
+
           <div class="form-group">
             <label>🏙️ Ciudad:</label>
             <input v-model="editData.city" type="text" placeholder="Ej: Bogotá" />
           </div>
-          
+
           <div class="form-group">
             <label>🩸 Tipo de sangre:</label>
             <select v-model="editData.blood_type">
@@ -161,6 +172,13 @@
         </form>
       </div>
     </div>
+
+    <!-- Enlaces de navegación -->
+    <nav class="user-nav">
+      <router-link to="/profile" class="nav-link">👤 Perfil</router-link>
+      <router-link to="/quotations" class="nav-link">Ventas</router-link>
+      <router-link to="/settings" class="nav-link">⚙️ Configuración</router-link>
+    </nav>
   </div>
 </template>
 
@@ -176,7 +194,7 @@ export default {
       error: null,
       editMode: false,
       saving: false,
-      editData: {}
+      editData: {},
     }
   },
 
@@ -188,20 +206,20 @@ export default {
 
   created() {
     // === DEBUGGING TEMPORAL ===
-    console.log('=== VERIFICACIÓN LOCALSTORAGE ===');
-    console.log('Raw user:', localStorage.getItem('user'));
-    console.log('Raw access_token:', localStorage.getItem('access_token'));
-    
-    const user = localStorage.getItem('user');
+    console.log('=== VERIFICACIÓN LOCALSTORAGE ===')
+    console.log('Raw user:', localStorage.getItem('user'))
+    console.log('Raw access_token:', localStorage.getItem('access_token'))
+
+    const user = localStorage.getItem('user')
     if (user) {
-      const parsed = JSON.parse(user);
-      console.log('Parsed user:', parsed);
-      console.log('¿Tiene access_token?:', parsed.access_token);
-      console.log('¿Tiene user.id?:', parsed.user?.id);
-      console.log('¿Tiene id directo?:', parsed.id);
+      const parsed = JSON.parse(user)
+      console.log('Parsed user:', parsed)
+      console.log('¿Tiene access_token?:', parsed.access_token)
+      console.log('¿Tiene user.id?:', parsed.user?.id)
+      console.log('¿Tiene id directo?:', parsed.id)
     }
-    
-    this.fetchUserData();
+
+    this.fetchUserData()
   },
 
   methods: {
@@ -213,13 +231,12 @@ export default {
         console.log('🚀 Obteniendo datos del usuario actual...')
         const response = await axios.get('/user/me')
         console.log('✅ Datos del usuario recibidos:', response.data)
-        
+
         this.user = response.data
         this.initializeEditData()
-        
       } catch (err) {
         console.error('❌ Error al obtener datos:', err)
-        
+
         if (err.response?.status === 401) {
           this.error = 'Tu sesión ha expirado. Serás redirigido al login.'
           setTimeout(() => this.$router.push('/login'), 3000)
@@ -238,7 +255,7 @@ export default {
         phone: this.user.phone || '',
         recovery_email: this.user.recovery_email || '',
         city: this.user.city || '',
-        blood_type: this.user.blood_type || ''
+        blood_type: this.user.blood_type || '',
       }
     },
 
@@ -260,11 +277,10 @@ export default {
       try {
         const response = await axios.put(`/user/${this.user.id}/profile`, this.editData)
         console.log('✅ Perfil actualizado:', response.data)
-        
+
         this.user = response.data
         this.closeEditMode()
         alert('✅ Perfil actualizado correctamente')
-        
       } catch (err) {
         console.error('❌ Error al guardar:', err)
         alert('❌ Error al guardar los cambios')
@@ -351,8 +367,12 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error-container {

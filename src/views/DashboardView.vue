@@ -20,19 +20,14 @@
           @keydown.escape="hideMenu(key)"
           @focusin="showMenu(key)"
         >
-          <button 
+          <button
             class="main-button"
             :aria-expanded="menus[key]"
             :aria-controls="`dropdown-${key}`"
           >
             {{ labels[key] }}
           </button>
-          <div 
-            class="dropdown-menu" 
-            v-if="menus[key]"
-            :id="`dropdown-${key}`"
-            role="menu"
-          >
+          <div class="dropdown-menu" v-if="menus[key]" :id="`dropdown-${key}`" role="menu">
             <button
               v-for="item in items"
               :key="item.text"
@@ -44,11 +39,7 @@
             </button>
           </div>
         </div>
-        <button 
-          class="logout-button" 
-          @click="logout" 
-          aria-label="Cerrar sesión"
-        >
+        <button class="logout-button" @click="logout" aria-label="Cerrar sesión">
           Cerrar Sesión
         </button>
       </nav>
@@ -85,17 +76,17 @@ const menus = ref({
 // Handler para cerrar los menús cuando se hace clic afuera
 const handleClickOutside = (event) => {
   const dropdowns = document.querySelectorAll('.dropdown')
-  
+
   // Si el clic no fue dentro de un dropdown, cerrar todos los menús
   let clickedInside = false
-  dropdowns.forEach(dropdown => {
+  dropdowns.forEach((dropdown) => {
     if (dropdown.contains(event.target)) {
       clickedInside = true
     }
   })
-  
+
   if (!clickedInside) {
-    Object.keys(menus.value).forEach(key => {
+    Object.keys(menus.value).forEach((key) => {
       menus.value[key] = false
     })
   }
@@ -104,8 +95,8 @@ const handleClickOutside = (event) => {
 const labels = {
   clientes: 'Clientes',
   productos: 'Productos',
-  cotizacion: 'Cotización',
-  stackflow: 'StackFlow',
+  cotizacion: 'Ventas', 
+  stackflow: 'Análisis',
   cuenta: 'Mi Cuenta',
 }
 
@@ -125,20 +116,19 @@ const options = {
   ],
   cotizacion: [
     { text: 'Nueva', path: '/dashboard/cotizacion/nueva' },
-    { text: 'Historial', path: '/cotizacion/historial' }
+    { text: 'Historial', path: '/cotizacion/historial' },
   ],
-  
-  stackflow: [
-    { text: 'Sistema', path: '/stackflow/info' },
-  ],
-  cuenta: [  // Nueva opción
+
+  stackflow: [{ text: 'Sistema', path: '/stackflow/info' }],
+  cuenta: [
+    // Nueva opción
     { text: 'Mi Perfil', path: '/dashboard/user' },
   ],
 }
 
 function showMenu(menu) {
   // Cerrar todos los demás menús primero
-  Object.keys(menus.value).forEach(key => {
+  Object.keys(menus.value).forEach((key) => {
     if (key !== menu) menus.value[key] = false
   })
   menus.value[menu] = true
@@ -150,13 +140,13 @@ function hideMenu(menu) {
 
 function navigate(path) {
   // Cerrar todos los menús antes de navegar
-  Object.keys(menus.value).forEach(key => {
+  Object.keys(menus.value).forEach((key) => {
     menus.value[key] = false
   })
-  
+
   // Mostrar indicador de carga
   isLoading.value = true
-  
+
   // Navegar a la ruta solicitada
   router.push(path).finally(() => {
     // Una vez completada la navegación, quitar el indicador de carga
@@ -173,7 +163,7 @@ function logout() {
     localStorage.removeItem('access_token')
     // Eliminar datos del usuario
     localStorage.removeItem('user')
-    
+
     // Redireccionar al login
     router.push('/login')
   } catch (error) {
@@ -203,7 +193,7 @@ onMounted(() => {
     console.error('Error al obtener datos de usuario:', error)
     userName.value = 'Usuario'
   }
-  
+
   // Agregar listener para cerrar menús al hacer clic fuera
   document.addEventListener('click', handleClickOutside)
 })
@@ -233,7 +223,8 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
@@ -261,8 +252,8 @@ html, body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  justify-content: center; 
-  display:flex
+  justify-content: center;
+  display: flex;
 }
 
 .header-content {
@@ -270,7 +261,6 @@ html, body {
   align-items: center;
   justify-content: flex-start;
   gap: 20px;
-
 }
 
 .logo {
@@ -431,27 +421,27 @@ html, body {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .main-button,
   .logout-button {
     width: 100%;
     padding: 0.75rem;
     text-align: center;
   }
-  
+
   .logout-button {
     margin-left: 0;
     margin-top: 0.5rem;
   }
-  
+
   .dropdown {
     width: 100%;
   }
-  
+
   .dropdown-menu {
     width: 100%;
   }
-  
+
   .workspace-area {
     padding: 1rem;
   }
@@ -466,7 +456,7 @@ html, body {
   }
 
   .header h1 {
-    font-size: 1.2rem  }
+    font-size: 1.2rem;
+  }
 }
 </style>
-  
