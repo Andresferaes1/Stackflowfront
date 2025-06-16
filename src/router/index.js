@@ -63,6 +63,17 @@ const router = createRouter({
 
         // === SECCIÓN CLIENTES ===
         {
+          path: 'clients/read', // URL completa: /dashboard/clients/read
+          name: 'client-read',
+          // Carga lazy de la vista unificada de consulta de clientes (búsqueda + detalles)
+          component: () => import('../views/clients/ClientReadView.vue'),
+          meta: {
+            requiresAuth: true,
+            section: 'clientes',
+            description: 'Directorio de clientes',
+          },
+        },
+        {
           path: 'clientes/nuevo', // URL completa: /dashboard/clientes/nuevo
           name: 'client-create',
           // Carga lazy del formulario de creación de clientes
@@ -73,7 +84,7 @@ const router = createRouter({
             description: 'Crear nuevo cliente',
           },
         },
-
+        
         // === SECCIÓN PRODUCTOS ===
         {
           path: 'products/manage-stock', // URL completa: /dashboard/products/manage-stock
@@ -216,7 +227,7 @@ router.beforeEach((to, from, next) => {
 })
 
 // Middleware que se ejecuta DESPUÉS de cada navegación exitosa
-router.afterEach((to, from) => {
+router.afterEach((to) => {
   console.log(`✅ Navegación completada: ${to.path}`)
 
   // Actualizar el título de la página según la ruta
@@ -233,7 +244,9 @@ router.afterEach((to, from) => {
       register: 'Registro',
       dashboard: 'Panel de Control',
       'user-profile': 'Mi Perfil',
+      'client-read': 'Directorio de Clientes', // ✅ NUEVO
       'client-create': 'Crear Cliente',
+      
       'stock-management': 'Gestión de Stock',
       'csv-upload': 'Cargar CSV',
       'product-read': 'Productos',

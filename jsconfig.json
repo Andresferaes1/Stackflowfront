@@ -4,5 +4,10 @@
       "@/*": ["./src/*"]
     }
   },
-  "exclude": ["node_modules", "dist", "src/views/CotizacionNew.vue"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/views/CotizacionNew.vue",
+    "src/views/clients/ClientDetailView.vue"
+  ]
 }
