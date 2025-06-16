@@ -32,7 +32,7 @@
           </button>
         </div>
       </div>
-      
+
       <div v-show="showFilters" class="filters-content">
         <!-- Búsqueda Rápida -->
         <div class="quick-search">
@@ -49,7 +49,9 @@
               class="search-input"
               @input="applyFilters"
             />
-            <small class="field-help">Busca en número de cotización, nombre del cliente o contenido general</small>
+            <small class="field-help"
+              >Busca en número de cotización, nombre del cliente o contenido general</small
+            >
           </div>
         </div>
 
@@ -275,14 +277,17 @@
         <!-- Estado Sin Resultados -->
         <div v-else-if="filteredQuotations.length === 0" class="empty-state">
           <div class="empty-icon">📋</div>
-          <h3>{{ hasActiveFilters ? 'No se encontraron resultados' : 'No hay cotizaciones creadas' }}</h3>
+          <h3>
+            {{ hasActiveFilters ? 'No se encontraron resultados' : 'No hay cotizaciones creadas' }}
+          </h3>
           <p v-if="hasActiveFilters">
             Intenta ajustar los filtros de búsqueda para obtener resultados diferentes
           </p>
-          <p v-else>
-            Crea tu primera cotización para comenzar a gestionar tus ventas
-          </p>
-          <button class="btn-primary" @click="hasActiveFilters ? clearAllFilters() : createNewQuotation()">
+          <p v-else>Crea tu primera cotización para comenzar a gestionar tus ventas</p>
+          <button
+            class="btn-primary"
+            @click="hasActiveFilters ? clearAllFilters() : createNewQuotation()"
+          >
             {{ hasActiveFilters ? '🔄 Limpiar Filtros' : '➕ Crear Primera Cotización' }}
           </button>
         </div>
@@ -301,17 +306,25 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="quotation in paginatedQuotations" :key="quotation.id" class="quotation-row">
+              <tr
+                v-for="quotation in paginatedQuotations"
+                :key="quotation.id"
+                class="quotation-row"
+              >
                 <td class="col-number">
                   <div class="quotation-number">
-                    <span class="number-text">{{ quotation.quotation_number || `COT-${String(quotation.id).padStart(3, '0')}` }}</span>
+                    <span class="number-text">{{
+                      quotation.quotation_number || `COT-${String(quotation.id).padStart(3, '0')}`
+                    }}</span>
                     <span class="number-id">#{{ quotation.id }}</span>
                   </div>
                 </td>
                 <td class="col-client">
                   <div class="client-info">
                     <span class="client-name">{{ quotation.client_name }}</span>
-                    <span v-if="quotation.client_email" class="client-email">{{ quotation.client_email }}</span>
+                    <span v-if="quotation.client_email" class="client-email">{{
+                      quotation.client_email
+                    }}</span>
                   </div>
                 </td>
                 <td class="col-date">
@@ -333,14 +346,14 @@
                 </td>
                 <td class="col-actions">
                   <div class="action-buttons">
-                    <button 
+                    <button
                       class="action-btn view-btn"
                       title="Ver detalles completos"
                       @click="viewQuotationDetails(quotation)"
                     >
                       👁️
                     </button>
-                    <button 
+                    <button
                       class="action-btn edit-btn"
                       :disabled="!canEditQuotation(quotation)"
                       :title="getEditTooltip(quotation)"
@@ -348,14 +361,14 @@
                     >
                       ✏️
                     </button>
-                    <button 
+                    <button
                       class="action-btn duplicate-btn"
                       title="Crear una copia de esta cotización"
                       @click="duplicateQuotation(quotation)"
                     >
                       📋
                     </button>
-                    <button 
+                    <button
                       class="action-btn delete-btn"
                       :disabled="!canDeleteQuotation(quotation)"
                       :title="getDeleteTooltip(quotation)"
@@ -375,32 +388,25 @@
     <!-- Paginación -->
     <div v-if="totalPages > 1" class="pagination-panel">
       <div class="pagination-info">
-        <span>Mostrando {{ startItem }} - {{ endItem }} de {{ filteredQuotations.length }} cotizaciones</span>
+        <span
+          >Mostrando {{ startItem }} - {{ endItem }} de
+          {{ filteredQuotations.length }} cotizaciones</span
+        >
       </div>
       <div class="pagination-controls">
-        <button 
-          class="page-btn"
-          :disabled="currentPage === 1"
-          @click="goToPage(1)"
-        >
-          ⏮️
-        </button>
-        <button 
-          class="page-btn"
-          :disabled="currentPage === 1"
-          @click="goToPage(currentPage - 1)"
-        >
+        <button class="page-btn" :disabled="currentPage === 1" @click="goToPage(1)">⏮️</button>
+        <button class="page-btn" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">
           ◀️
         </button>
         <span class="page-current">{{ currentPage }} / {{ totalPages }}</span>
-        <button 
+        <button
           class="page-btn"
           :disabled="currentPage === totalPages"
           @click="goToPage(currentPage + 1)"
         >
           ▶️
         </button>
-        <button 
+        <button
           class="page-btn"
           :disabled="currentPage === totalPages"
           @click="goToPage(totalPages)"
@@ -427,7 +433,11 @@
           <h3>⚠️ Confirmar Eliminación</h3>
         </div>
         <div class="modal-body">
-          <p>¿Estás seguro de que deseas eliminar la cotización <strong>{{ quotationToDelete?.quotation_number }}</strong>?</p>
+          <p>
+            ¿Estás seguro de que deseas eliminar la cotización
+            <strong>{{ quotationToDelete?.quotation_number }}</strong
+            >?
+          </p>
           <p class="warning-text">Esta acción no se puede deshacer.</p>
         </div>
         <div class="modal-actions">
@@ -448,7 +458,7 @@ export default {
       showFilters: true,
       showDeleteModal: false,
       quotationToDelete: null,
-      
+
       filters: {
         quickSearch: '',
         quotationNumber: '',
@@ -456,15 +466,15 @@ export default {
         status: '',
         dateFrom: '',
         dateTo: '',
-        amountRange: ''
+        amountRange: '',
       },
-      
+
       sortBy: 'created_at',
       sortDirection: 'desc',
-      
+
       currentPage: 1,
       itemsPerPage: 25,
-      
+
       quotations: [
         {
           id: 1,
@@ -474,7 +484,7 @@ export default {
           total: 2500000,
           status: 'aprobada',
           created_at: '2024-01-15T10:30:00Z',
-          items_count: 5
+          items_count: 5,
         },
         {
           id: 2,
@@ -484,7 +494,7 @@ export default {
           total: 850000,
           status: 'enviada',
           created_at: '2024-01-20T14:15:00Z',
-          items_count: 3
+          items_count: 3,
         },
         {
           id: 3,
@@ -494,7 +504,7 @@ export default {
           total: 1200000,
           status: 'borrador',
           created_at: '2024-01-22T09:45:00Z',
-          items_count: 8
+          items_count: 8,
         },
         {
           id: 4,
@@ -504,7 +514,7 @@ export default {
           total: 450000,
           status: 'rechazada',
           created_at: '2024-01-25T16:20:00Z',
-          items_count: 2
+          items_count: 2,
         },
         {
           id: 5,
@@ -514,63 +524,60 @@ export default {
           total: 3200000,
           status: 'facturada',
           created_at: '2024-01-28T11:10:00Z',
-          items_count: 12
-        }
-      ]
+          items_count: 12,
+        },
+      ],
     }
   },
-  
+
   computed: {
     filteredQuotations() {
       let filtered = [...this.quotations]
-      
+
       if (this.filters.quickSearch) {
         const query = this.filters.quickSearch.toLowerCase()
-        filtered = filtered.filter(q => 
-          q.quotation_number.toLowerCase().includes(query) ||
-          q.client_name.toLowerCase().includes(query) ||
-          q.client_email.toLowerCase().includes(query)
+        filtered = filtered.filter(
+          (q) =>
+            q.quotation_number.toLowerCase().includes(query) ||
+            q.client_name.toLowerCase().includes(query) ||
+            q.client_email.toLowerCase().includes(query),
         )
       }
-      
+
       if (this.filters.quotationNumber) {
-        filtered = filtered.filter(q => 
-          q.quotation_number.toLowerCase().includes(this.filters.quotationNumber.toLowerCase())
+        filtered = filtered.filter((q) =>
+          q.quotation_number.toLowerCase().includes(this.filters.quotationNumber.toLowerCase()),
         )
       }
-      
+
       if (this.filters.clientName) {
-        filtered = filtered.filter(q => 
-          q.client_name.toLowerCase().includes(this.filters.clientName.toLowerCase())
+        filtered = filtered.filter((q) =>
+          q.client_name.toLowerCase().includes(this.filters.clientName.toLowerCase()),
         )
       }
-      
+
       if (this.filters.status) {
-        filtered = filtered.filter(q => q.status === this.filters.status)
+        filtered = filtered.filter((q) => q.status === this.filters.status)
       }
-      
+
       if (this.filters.dateFrom) {
-        filtered = filtered.filter(q => 
-          new Date(q.created_at) >= new Date(this.filters.dateFrom)
-        )
+        filtered = filtered.filter((q) => new Date(q.created_at) >= new Date(this.filters.dateFrom))
       }
-      
+
       if (this.filters.dateTo) {
         const dateTo = new Date(this.filters.dateTo)
         dateTo.setHours(23, 59, 59, 999)
-        filtered = filtered.filter(q => 
-          new Date(q.created_at) <= dateTo
-        )
+        filtered = filtered.filter((q) => new Date(q.created_at) <= dateTo)
       }
-      
+
       if (this.filters.amountRange) {
         filtered = this.filterByAmountRange(filtered, this.filters.amountRange)
       }
-      
+
       filtered.sort((a, b) => {
         let aValue = a[this.sortBy]
         let bValue = b[this.sortBy]
-        
+
         if (this.sortBy === 'total') {
           aValue = parseFloat(aValue) || 0
           bValue = parseFloat(bValue) || 0
@@ -581,23 +588,23 @@ export default {
           aValue = aValue.toLowerCase()
           bValue = bValue.toLowerCase()
         }
-        
+
         if (this.sortDirection === 'asc') {
           return aValue > bValue ? 1 : -1
         } else {
           return aValue < bValue ? 1 : -1
         }
       })
-      
+
       return filtered
     },
-    
+
     paginatedQuotations() {
       const start = (this.currentPage - 1) * this.itemsPerPage
       const end = start + this.itemsPerPage
       return this.filteredQuotations.slice(start, end)
     },
-    
+
     statistics() {
       const stats = {
         borrador: 0,
@@ -605,51 +612,51 @@ export default {
         aprobada: 0,
         facturada: 0,
         rechazada: 0,
-        totalValue: 0
+        totalValue: 0,
       }
-      
-      this.quotations.forEach(q => {
+
+      this.quotations.forEach((q) => {
         // ✅ CORRECCIÓN ESLint: Usar Object.prototype.hasOwnProperty.call()
         if (Object.prototype.hasOwnProperty.call(stats, q.status)) {
           stats[q.status]++
         }
         stats.totalValue += parseFloat(q.total) || 0
       })
-      
+
       return stats
     },
-    
+
     totalQuotations() {
       return this.quotations.length
     },
-    
+
     totalPages() {
       return Math.ceil(this.filteredQuotations.length / this.itemsPerPage)
     },
-    
+
     startItem() {
       return (this.currentPage - 1) * this.itemsPerPage + 1
     },
-    
+
     endItem() {
       return Math.min(this.currentPage * this.itemsPerPage, this.filteredQuotations.length)
     },
-    
+
     activeFiltersCount() {
-      return Object.values(this.filters).filter(value => value.trim() !== '').length
+      return Object.values(this.filters).filter((value) => value.trim() !== '').length
     },
-    
+
     hasActiveFilters() {
       return this.activeFiltersCount > 0
-    }
+    },
   },
-  
+
   methods: {
     applyFilters() {
       this.currentPage = 1
       console.log('🔍 Aplicando filtros:', this.filters)
     },
-    
+
     clearAllFilters() {
       this.filters = {
         quickSearch: '',
@@ -658,36 +665,36 @@ export default {
         status: '',
         dateFrom: '',
         dateTo: '',
-        amountRange: ''
+        amountRange: '',
       }
       this.currentPage = 1
       console.log('🗑️ Filtros limpiados')
     },
-    
+
     clearFilter(filterName) {
       this.filters[filterName] = ''
       this.applyFilters()
       console.log(`🗑️ Filtro ${filterName} eliminado`)
     },
-    
+
     clearDateFilters() {
       this.filters.dateFrom = ''
       this.filters.dateTo = ''
       this.applyFilters()
     },
-    
+
     toggleFiltersPanel() {
       this.showFilters = !this.showFilters
     },
-    
+
     filterByAmountRange(quotations, range) {
       const [min, max] = this.parseAmountRange(range)
-      return quotations.filter(q => {
+      return quotations.filter((q) => {
         const amount = parseFloat(q.total) || 0
         return amount >= min && (max === null || amount <= max)
       })
     },
-    
+
     parseAmountRange(range) {
       switch (range) {
         case '0-100000':
@@ -702,154 +709,137 @@ export default {
           return [0, null]
       }
     },
-    
+
     applySorting() {
       console.log(`📊 Ordenando por ${this.sortBy} (${this.sortDirection})`)
     },
-    
+
     toggleSortDirection() {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
       this.applySorting()
     },
-    
+
     goToPage(page) {
       if (page >= 1 && page <= this.totalPages) {
         this.currentPage = page
         console.log(`📄 Navegando a página ${page}`)
       }
     },
-    
+
     changeItemsPerPage() {
       this.currentPage = 1
       console.log(`📋 Mostrando ${this.itemsPerPage} elementos por página`)
     },
-    
+
     viewQuotationDetails(quotation) {
       console.log('👁️ Ver detalles:', quotation.quotation_number)
-      alert(`Ver detalles de ${quotation.quotation_number}\n\nCliente: ${quotation.client_name}\nMonto: $${this.formatNumber(quotation.total)}\nEstado: ${this.getStatusText(quotation.status)}`)
+      alert(
+        `Ver detalles de ${quotation.quotation_number}\n\nCliente: ${quotation.client_name}\nMonto: $${this.formatNumber(quotation.total)}\nEstado: ${this.getStatusText(quotation.status)}`,
+      )
     },
-    
+
     // ✅ NAVEGACIÓN CORREGIDA - CREAR NUEVA COTIZACIÓN
     createNewQuotation() {
       console.log('🚀 Navegando a crear nueva cotización...')
-      try {
-        // Usar exactamente la misma navegación que funciona en otras vistas
-        this.$router.push({ name: 'quotation-create' })
-      } catch (error) {
-        console.error('❌ Error navegando a cotización nueva:', error)
-        // Fallback: usar ruta completa
-        window.location.href = '/dashboard/cotizacion/nueva'
-      }
+      this.$router.push('/dashboard/quotation/create') // ← USAR RUTA REAL DEL ROUTER
     },
-    
+
     // ✅ NAVEGACIÓN CORREGIDA - EDITAR COTIZACIÓN
     editQuotation(quotation) {
       if (!this.canEditQuotation(quotation)) {
-        alert('No se puede editar esta cotización porque ya ha sido facturada o está en un estado no editable.')
+        alert(
+          'No se puede editar esta cotización porque ya ha sido facturada o está en un estado no editable.',
+        )
         return
       }
-      
+
       console.log('✏️ Editando cotización:', quotation.quotation_number)
-      try {
-        // Usar exactamente la misma navegación que funciona en otras vistas
-        this.$router.push({
-          name: 'quotation-create',
-          query: { edit: quotation.id }
-        })
-      } catch (error) {
-        console.error('❌ Error navegando a editar cotización:', error)
-        // Fallback: usar ruta completa
-        window.location.href = `/dashboard/cotizacion/nueva?edit=${quotation.id}`
-      }
+      this.$router.push({
+        path: '/dashboard/quotation/create', // ← USAR RUTA REAL DEL ROUTER
+        query: { edit: quotation.id },
+      })
     },
-    
+
     // ✅ NAVEGACIÓN CORREGIDA - DUPLICAR COTIZACIÓN
     duplicateQuotation(quotation) {
       console.log('📋 Duplicando cotización:', quotation.quotation_number)
-      try {
-        // Usar exactamente la misma navegación que funciona en otras vistas
-        this.$router.push({
-          name: 'quotation-create',
-          query: { duplicate: quotation.id }
-        })
-      } catch (error) {
-        console.error('❌ Error navegando a duplicar cotización:', error)
-        // Fallback: usar ruta completa
-        window.location.href = `/dashboard/cotizacion/nueva?duplicate=${quotation.id}`
-      }
+      this.$router.push({
+        path: '/dashboard/quotation/create', // ← USAR RUTA REAL DEL ROUTER
+        query: { duplicate: quotation.id },
+      })
     },
-    
+
     deleteQuotation(quotation) {
       if (!this.canDeleteQuotation(quotation)) {
         alert('No se puede eliminar esta cotización porque ya ha sido facturada.')
         return
       }
-      
+
       this.quotationToDelete = quotation
       this.showDeleteModal = true
     },
-    
+
     confirmDelete() {
       if (this.quotationToDelete) {
         console.log('🗑️ Eliminando:', this.quotationToDelete.quotation_number)
-        
-        const index = this.quotations.findIndex(q => q.id === this.quotationToDelete.id)
+
+        const index = this.quotations.findIndex((q) => q.id === this.quotationToDelete.id)
         if (index > -1) {
           this.quotations.splice(index, 1)
           console.log('✅ Cotización eliminada exitosamente')
         }
-        
+
         this.cancelDelete()
       }
     },
-    
+
     cancelDelete() {
       this.showDeleteModal = false
       this.quotationToDelete = null
     },
-    
+
     canEditQuotation(quotation) {
       return !['facturada', 'aprobada'].includes(quotation.status)
     },
-    
+
     canDeleteQuotation(quotation) {
       return !['facturada'].includes(quotation.status)
     },
-    
+
     getEditTooltip(quotation) {
       if (this.canEditQuotation(quotation)) {
         return 'Editar esta cotización'
       }
       return 'No se puede editar: cotización ya facturada o aprobada'
     },
-    
+
     getDeleteTooltip(quotation) {
       if (this.canDeleteQuotation(quotation)) {
         return 'Eliminar esta cotización'
       }
       return 'No se puede eliminar: cotización ya facturada'
     },
-    
+
     formatNumber(number) {
       return new Intl.NumberFormat('es-CO', {
         minimumFractionDigits: 0,
-        maximumFractionDigits: 0
+        maximumFractionDigits: 0,
       }).format(number || 0)
     },
-    
+
     formatDate(dateString) {
       if (!dateString) return ''
       try {
         return new Date(dateString).toLocaleDateString('es-CO', {
           year: 'numeric',
           month: 'short',
-          day: 'numeric'
+          day: 'numeric',
         })
       } catch {
         return dateString
       }
     },
-    
+
     getRelativeTime(dateString) {
       if (!dateString) return ''
       try {
@@ -857,7 +847,7 @@ export default {
         const now = new Date()
         const diffTime = Math.abs(now - date)
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-        
+
         if (diffDays === 1) return 'Hace 1 día'
         if (diffDays < 7) return `Hace ${diffDays} días`
         if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`
@@ -867,7 +857,7 @@ export default {
         return ''
       }
     },
-    
+
     formatDateRange() {
       if (this.filters.dateFrom && this.filters.dateTo) {
         return `${this.formatDate(this.filters.dateFrom)} - ${this.formatDate(this.filters.dateTo)}`
@@ -878,7 +868,7 @@ export default {
       }
       return ''
     },
-    
+
     getStatusIcon(status) {
       const icons = {
         borrador: '📝',
@@ -886,11 +876,11 @@ export default {
         aprobada: '✅',
         facturada: '🧾',
         rechazada: '❌',
-        vencida: '⏰'
+        vencida: '⏰',
       }
       return icons[status] || '❓'
     },
-    
+
     getStatusText(status) {
       const texts = {
         borrador: 'Borrador',
@@ -898,53 +888,56 @@ export default {
         aprobada: 'Aprobada',
         facturada: 'Facturada',
         rechazada: 'Rechazada',
-        vencida: 'Vencida'
+        vencida: 'Vencida',
       }
       return texts[status] || status
     },
-    
+
     getAmountRangeText(range) {
       const texts = {
         '0-100000': 'Hasta $100,000',
         '100000-500000': '$100,000 - $500,000',
         '500000-1000000': '$500,000 - $1,000,000',
-        '1000000+': 'Más de $1,000,000'
+        '1000000+': 'Más de $1,000,000',
       }
       return texts[range] || range
     },
-    
+
     async loadQuotationsFromBackend() {
       this.isLoading = true
       try {
         console.log('🔄 Cargando cotizaciones...')
         // Simular delay de red
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
         // TODO: Aquí irá la llamada real al backend cuando esté listo
         // const axios = await import('@/services/axios')
         // const response = await axios.get('/quotations/')
         // this.quotations = response.data
-        
+
         console.log('✅ Cotizaciones cargadas exitosamente')
       } catch (error) {
         console.error('❌ Error cargando cotizaciones:', error)
       } finally {
         this.isLoading = false
       }
-    }
+    },
   },
-  
+
   // ✅ DEBUG: Agregar logs para verificar funcionamiento
   mounted() {
     console.log('📍 QuotationHistoryView montado correctamente')
     console.log('📍 Ruta actual:', this.$route.path)
     console.log('📍 Router disponible:', !!this.$router)
-    console.log('📍 Rutas del router:', this.$router.getRoutes().map(r => r.name))
+    console.log(
+      '📍 Rutas del router:',
+      this.$router.getRoutes().map((r) => r.name),
+    )
   },
-  
+
   async created() {
     await this.loadQuotationsFromBackend()
-  }
+  },
 }
 </script>
 
@@ -1332,8 +1325,12 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .empty-icon {
@@ -1634,40 +1631,40 @@ export default {
     text-align: center;
     gap: 1rem;
   }
-  
+
   .panel-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
   }
-  
+
   .filter-row {
     grid-template-columns: 1fr;
   }
-  
+
   .stats-panel {
     grid-template-columns: 1fr;
   }
-  
+
   .panel-actions {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .pagination-panel {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .quotations-table {
     font-size: 0.8rem;
   }
-  
+
   .quotations-table th,
   .quotations-table td {
     padding: 0.5rem;
   }
-  
+
   .action-buttons {
     flex-direction: column;
     gap: 0.25rem;

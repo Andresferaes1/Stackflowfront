@@ -1,288 +1,349 @@
 <template>
-  <div class="client-read-workspace">
-    <!-- Header Principal -->
-    <div class="client-header">
-      <div class="header-content">
-        <div class="title-section">
-          <h1 class="main-title">
-            <span class="title-icon">🏢</span>
-            Gestión de Clientes
-          </h1>
-          <p class="subtitle">Busca, consulta y administra todos los clientes registrados en tiempo real</p>
+  <div class="client-read-container">
+    <!-- Header con Estadísticas -->
+    <div class="page-header">
+      <div class="header-left">
+        <h1>📋 Gestión de Clientes</h1>
+        <p class="subtitle">{{ clients.length }} clientes registrados</p>
+      </div>
+      <div class="header-actions">
+        <div class="stats-summary">
+          <span class="stat-item">
+            ✅ {{ getStatusCount('activo') }} Activos
+          </span>
+          <span class="stat-item">
+            ⚠️ {{ getStatusCount('inactivo') }} Inactivos
+          </span>
         </div>
-        <div class="stats-badge">
-          <span class="badge-label">Total:</span>
-          <span class="badge-number">{{ totalClients }}</span>
-        </div>
+        <button class="btn-primary" @click="goToCreateClient">
+          ➕ Nuevo Cliente
+        </button>
       </div>
     </div>
 
-    <!-- Panel de Búsqueda -->
+    <!-- Panel de Búsqueda Avanzada -->
     <div class="search-panel">
-      <div class="panel-header">
-        <h3><span class="section-icon">🔍</span>Búsqueda de Clientes</h3>
+      <div class="search-header">
+        <h3>🔍 Búsqueda y Filtros</h3>
         <div class="search-actions">
-          <button class="btn-clear" @click="clearSearch" v-if="searchQuery">
-            <span class="btn-icon">🗑️</span>
-            Limpiar
+          <button v-if="hasActiveFilters" class="btn-clear" @click="clearAllFilters">
+            🗑️ Limpiar Todo
           </button>
-          <button class="btn-add" @click="goToCreateClient">
-            <span class="btn-icon">➕</span>
-            Nuevo Cliente
+          <button class="btn-export" @click="exportClients">
+            📊 Exportar
           </button>
         </div>
       </div>
-      
-      <div class="search-content">
-        <div class="unified-search">
-          <div class="search-field">
-            <label for="clientSearch">
-              <span class="field-icon">🔍</span>
-              Búsqueda Inteligente
-            </label>
-            <div class="search-input-wrapper">
-              <input
-                id="clientSearch"
-                v-model="searchQuery"
-                type="text"
-                placeholder="Buscar por nombre de empresa, NIT, representante legal, email o teléfono..."
-                class="search-input"
-                @input="handleSearch"
-                @keyup.enter="performSearch"
-              />
-              <button class="search-button" @click="performSearch">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <path d="m21 21-4.35-4.35"></path>
-                </svg>
-              </button>
+
+      <!-- Búsqueda Principal -->
+      <div class="search-main">
+        <div class="search-bar">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Buscar por nombre, NIT, email, teléfono o representante..."
+            class="search-input"
+            @input="handleSearch"
+            @keyup.enter="performSearch"
+          />
+          <button class="search-btn" @click="performSearch">🔍</button>
+        </div>
+        
+        <!-- Filtros Avanzados -->
+        <div class="advanced-filters">
+          <div class="filter-row">
+            <!-- Filtros por Estado -->
+            <div class="filter-group">
+              <label>Estado:</label>
+              <div class="filter-tabs">
+                <button 
+                  v-for="filter in statusFilters" 
+                  :key="filter.value"
+                  :class="['filter-tab', { active: selectedStatus === filter.value }]"
+                  @click="setStatusFilter(filter.value)"
+                >
+                  {{ filter.icon }} {{ filter.label }} ({{ getStatusCount(filter.value) }})
+                </button>
+              </div>
             </div>
-            <small class="field-help">
-              Escribe cualquier información del cliente: razón social, NIT, nombre del representante, email o teléfono
-            </small>
+
+            <!-- Filtros por Ciudad -->
+            <div class="filter-group">
+              <label>Ciudad:</label>
+              <select v-model="selectedCity" @change="applyFilters" class="filter-select">
+                <option value="">Todas las ciudades</option>
+                <option v-for="city in availableCities" :key="city.value" :value="city.value">
+                  {{ city.label }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Filtros por Fecha -->
+            <div class="filter-group">
+              <label>Registrado:</label>
+              <select v-model="dateRange" @change="applyFilters" class="filter-select">
+                <option value="">Cualquier fecha</option>
+                <option value="today">Hoy</option>
+                <option value="week">Esta semana</option>
+                <option value="month">Este mes</option>
+                <option value="year">Este año</option>
+              </select>
+            </div>
           </div>
 
-          <!-- Filtros Rápidos -->
-          <div class="quick-filters">
-            <button 
-              v-for="status in quickStatusFilters" 
-              :key="status.value"
-              :class="['quick-filter-btn', { active: filters.status === status.value }]"
-              @click="setQuickFilter(status.value)"
-            >
-              <span class="filter-icon">{{ status.icon }}</span>
-              <span class="filter-label">{{ status.label }}</span>
-              <span class="filter-count">({{ getStatusCount(status.value) }})</span>
-            </button>
-          </div>
-
-          <!-- Indicador de búsqueda activa -->
-          <div v-if="searchQuery || filters.status" class="search-indicator">
-            <span class="indicator-text">
-              {{ searchQuery ? `Buscando: "${searchQuery}"` : `Filtrando por: ${getStatusText(filters.status)}` }}
-            </span>
-            <span class="results-count">{{ filteredClients.length }} resultados</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Panel de Resultados -->
-    <div class="results-panel">
-      <div class="panel-header">
-        <h3>
-          <span class="section-icon">📋</span>
-          {{ searchQuery || filters.status ? 'Resultados de Búsqueda' : 'Todos los Clientes' }} 
-          ({{ filteredClients.length }})
-        </h3>
-        <div class="panel-actions">
+          <!-- Ordenamiento -->
           <div class="sort-controls">
             <label>Ordenar por:</label>
-            <select v-model="sortBy" class="sort-select" @change="applySorting">
-              <option value="name">🏢 Razón Social</option>
-              <option value="nit">🆔 NIT</option>
-              <option value="legalRepresentative">👤 Representante</option>
-              <option value="status">📊 Estado</option>
-              <option value="created_at">📅 Fecha Registro</option>
+            <select v-model="sortBy" @change="applySorting" class="sort-select">
+              <option value="name">Nombre</option>
+              <option value="created_at">Fecha de registro</option>
+              <option value="status">Estado</option>
+              <option value="lastActivity">Última actividad</option>
             </select>
-            <button class="sort-direction-btn" @click="toggleSortDirection">
-              {{ sortDirection === 'asc' ? '↑' : '↓' }}
+            <button class="sort-direction" @click="toggleSortDirection">
+              {{ sortDirection === 'asc' ? '⬆️' : '⬇️' }}
             </button>
+          </div>
+        </div>
+
+        <!-- Indicador de Resultados -->
+        <div v-if="hasActiveFilters" class="search-results">
+          <div class="results-info">
+            📊 {{ filteredClients.length }} de {{ clients.length }} clientes
+            <span v-if="searchQuery">" {{ searchQuery }}"</span>
+          </div>
+          <button class="clear-search" @click="clearAllFilters">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Clientes con Vista Detallada -->
+    <div class="clients-section">
+      <!-- Controles de Vista -->
+      <div class="view-controls">
+        <div class="view-options">
+          <button 
+            :class="['view-btn', { active: viewMode === 'cards' }]"
+            @click="setViewMode('cards')"
+          >
+            🃏 Tarjetas
+          </button>
+          <button 
+            :class="['view-btn', { active: viewMode === 'table' }]"
+            @click="setViewMode('table')"
+          >
+            📋 Tabla
+          </button>
+          <button 
+            :class="['view-btn', { active: viewMode === 'compact' }]"
+            @click="setViewMode('compact')"
+          >
+            📝 Compacto
+          </button>
+        </div>
+
+        <div class="items-per-page">
+          <label>Mostrar:</label>
+          <select v-model="itemsPerPage" @change="changeItemsPerPage">
+            <option value="6">6</option>
+            <option value="12">12</option>
+            <option value="24">24</option>
+            <option value="50">50</option>
+          </select>
+          <span>por página</span>
+        </div>
+      </div>
+
+      <!-- Estados de Carga -->
+      <div v-if="isLoading" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Cargando clientes...</p>
+      </div>
+      
+      <div v-else-if="filteredClients.length === 0" class="empty-state">
+        <div class="empty-icon">🏢</div>
+        <h3>{{ searchQuery ? 'No se encontraron coincidencias' : 'No hay clientes registrados' }}</h3>
+        <p v-if="searchQuery">
+          No hay clientes que coincidan con "{{ searchQuery }}"
+        </p>
+        <div class="empty-actions">
+          <button v-if="searchQuery" class="btn-secondary" @click="clearAllFilters">
+            🔄 Limpiar búsqueda
+          </button>
+          <button class="btn-primary" @click="goToCreateClient">
+            ➕ {{ searchQuery ? 'Crear cliente' : 'Crear primer cliente' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Vista de Tarjetas -->
+      <div v-else-if="viewMode === 'cards'" class="clients-cards">
+        <div 
+          v-for="client in paginatedClients" 
+          :key="client.id" 
+          class="client-card"
+          :class="{ expanded: expandedClients.includes(client.id) }"
+        >
+          <!-- Header de la Tarjeta -->
+          <div class="card-header">
+            <div class="client-avatar">
+              {{ getClientInitials(client.name) }}
+            </div>
+            <div class="client-basic-info">
+              <h3>{{ client.name }}</h3>
+              <p class="client-rep">👤 {{ client.legalRepresentative }}</p>
+              <p class="client-nit">🆔 {{ client.nit }}</p>
+            </div>
+            <div class="card-actions">
+              <span :class="['status-badge', `status-${client.status}`]">
+                {{ getStatusIcon(client.status) }} {{ getStatusText(client.status) }}
+              </span>
+              <button 
+                class="expand-btn"
+                @click="toggleClientDetails(client.id)"
+              >
+                {{ expandedClients.includes(client.id) ? '⬆️' : '⬇️' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Información de Contacto -->
+          <div class="card-contact">
+            <div class="contact-item">
+              <span class="contact-label">📧 Email:</span>
+              <a :href="`mailto:${client.email}`" class="contact-value">{{ client.email }}</a>
+            </div>
+            <div class="contact-item">
+              <span class="contact-label">📞 Teléfono:</span>
+              <a :href="`tel:${client.phone}`" class="contact-value">{{ client.phone }}</a>
+            </div>
+          </div>
+
+          <!-- Detalles Expandibles -->
+          <div v-if="expandedClients.includes(client.id)" class="card-details">
+            <div class="details-grid">
+              <div class="detail-item">
+                <strong>📍 Dirección:</strong>
+                <p>{{ client.address || 'No registrada' }}</p>
+              </div>
+              <div class="detail-item">
+                <strong>🏙️ Ciudad:</strong>
+                <p>{{ getCityText(client.city) }}</p>
+              </div>
+              <div class="detail-item">
+                <strong>📅 Registro:</strong>
+                <p>{{ formatDate(client.created_at) }}</p>
+              </div>
+              <div class="detail-item">
+                <strong>📊 Cotizaciones:</strong>
+                <p>{{ client.totalQuotations || 0 }} realizadas</p>
+              </div>
+            </div>
+
+            <!-- Acciones Expandidas -->
+            <div class="expanded-actions">
+              <button class="action-btn primary" @click="editClient(client)">
+                ✏️ Editar Cliente
+              </button>
+              <button class="action-btn success" @click="createQuotationForClient(client)">
+                📝 Nueva Cotización
+              </button>
+              <button class="action-btn info" @click="viewClientHistory(client)">
+                📚 Ver Historial
+              </button>
+              <button class="action-btn warning" @click="sendEmailToClient(client)">
+                ✉️ Enviar Email
+              </button>
+              <button class="action-btn danger" @click="confirmDeleteClient(client)">
+                🗑️ Eliminar
+              </button>
+            </div>
+          </div>
+
+          <!-- Acciones Rápidas -->
+          <div v-else class="card-quick-actions">
+            <button class="quick-btn edit" @click="editClient(client)">✏️</button>
+            <button class="quick-btn delete" @click="confirmDeleteClient(client)">🗑️</button>
+            <button class="quick-btn quotation" @click="createQuotationForClient(client)">📝</button>
           </div>
         </div>
       </div>
 
-      <div class="panel-content">
-        <!-- Estado de Carga -->
-        <div v-if="isLoading" class="loading-state">
-          <div class="loading-spinner"></div>
-          <p>Buscando clientes...</p>
-        </div>
+      <!-- Vista de Tabla -->
+      <div v-else-if="viewMode === 'table'" class="clients-table">
+        <table>
+          <thead>
+            <tr>
+              <th @click="setSortBy('name')">
+                Empresa {{ sortBy === 'name' ? (sortDirection === 'asc' ? '⬆️' : '⬇️') : '' }}
+              </th>
+              <th @click="setSortBy('nit')">
+                NIT {{ sortBy === 'nit' ? (sortDirection === 'asc' ? '⬆️' : '⬇️') : '' }}
+              </th>
+              <th>Representante</th>
+              <th>Contacto</th>
+              <th @click="setSortBy('status')">
+                Estado {{ sortBy === 'status' ? (sortDirection === 'asc' ? '⬆️' : '⬇️') : '' }}
+              </th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="client in paginatedClients" :key="client.id">
+              <td>
+                <strong>{{ client.name }}</strong>
+                <br><small>{{ getCityText(client.city) }}</small>
+              </td>
+              <td>{{ client.nit }}</td>
+              <td>{{ client.legalRepresentative }}</td>
+              <td>
+                <div>📧 <a :href="`mailto:${client.email}`">{{ client.email }}</a></div>
+                <div>📞 <a :href="`tel:${client.phone}`">{{ client.phone }}</a></div>
+              </td>
+              <td>
+                <span :class="['status-badge', `status-${client.status}`]">
+                  {{ getStatusIcon(client.status) }} {{ getStatusText(client.status) }}
+                </span>
+              </td>
+              <td>
+                <div class="table-actions">
+                  <button class="table-btn edit" @click="editClient(client)">✏️</button>
+                  <button class="table-btn delete" @click="confirmDeleteClient(client)">🗑️</button>
+                  <button class="table-btn quotation" @click="createQuotationForClient(client)">📝</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-        <!-- Estado Sin Resultados -->
-        <div v-else-if="filteredClients.length === 0" class="empty-state">
-          <div class="empty-icon">🏢</div>
-          <h3>{{ hasActiveSearch ? 'No se encontraron clientes' : 'No hay clientes registrados' }}</h3>
-          <p v-if="hasActiveSearch">
-            No hay clientes que coincidan con la búsqueda "{{ searchQuery }}"
-          </p>
-          <p v-else>
-            El directorio de clientes está vacío. Comienza registrando tu primer cliente.
-          </p>
-          <button class="btn-primary" @click="hasActiveSearch ? clearSearch() : goToCreateClient()">
-            {{ hasActiveSearch ? '🔄 Limpiar Búsqueda' : '➕ Crear Primer Cliente' }}
-          </button>
-        </div>
-
-        <!-- Lista de Clientes con Detalles Completos -->
-        <div v-else class="clients-detailed-list">
-          <div 
-            v-for="client in paginatedClients" 
-            :key="client.id" 
-            class="client-detailed-card"
-          >
-            <!-- Header del Cliente -->
-            <div class="client-card-header">
-              <div class="client-main-info">
-                <div class="client-avatar">
-                  <span class="avatar-text">{{ getInitials(client.name) }}</span>
-                </div>
-                <div class="client-basic-info">
-                  <h3 class="client-company-name">{{ client.name }}</h3>
-                  <p class="client-representative">
-                    <span class="rep-icon">👤</span>
-                    {{ client.legalRepresentative }}
-                  </p>
-                  <p class="client-nit">
-                    <span class="nit-icon">🆔</span>
-                    NIT: {{ client.nit }}
-                  </p>
-                </div>
-              </div>
-              <div class="client-status-actions">
-                <div :class="['client-status-badge', `status-${client.status}`]">
-                  <span class="status-icon">{{ getStatusIcon(client.status) }}</span>
-                  <span class="status-text">{{ getStatusText(client.status) }}</span>
-                </div>
-                <div class="client-actions-menu">
-                  <button 
-                    class="action-btn primary"
-                    @click="toggleClientDetails(client.id)"
-                    :title="expandedClients.includes(client.id) ? 'Ocultar detalles' : 'Ver detalles'"
-                  >
-                    <span class="action-icon">{{ expandedClients.includes(client.id) ? '👁️‍🗨️' : '👁️' }}</span>
-                    {{ expandedClients.includes(client.id) ? 'Ocultar' : 'Ver Más' }}
-                  </button>
-                  <button 
-                    class="action-btn secondary"
-                    @click="editClient(client)"
-                    title="Editar cliente"
-                  >
-                    <span class="action-icon">✏️</span>
-                    Editar
-                  </button>
-                  <button 
-                    class="action-btn danger"
-                    @click="confirmDeleteClient(client)"
-                    title="Eliminar cliente"
-                  >
-                    <span class="action-icon">🗑️</span>
-                    Eliminar
-                  </button>
-                </div>
-              </div>
+      <!-- Vista Compacta -->
+      <div v-else-if="viewMode === 'compact'" class="clients-compact">
+        <div 
+          v-for="client in paginatedClients" 
+          :key="client.id" 
+          class="compact-item"
+        >
+          <div class="compact-main">
+            <span :class="['status-dot', `status-${client.status}`]"></span>
+            <div class="compact-info">
+              <strong>{{ client.name }}</strong>
+              <span class="compact-details">{{ client.nit }} • {{ client.legalRepresentative }}</span>
             </div>
-
-            <!-- Información de Contacto Siempre Visible -->
-            <div class="client-contact-info">
-              <div class="contact-item">
-                <span class="contact-icon">📧</span>
-                <span class="contact-label">Email:</span>
-                <a :href="`mailto:${client.email}`" class="contact-value email">{{ client.email }}</a>
-              </div>
-              <div class="contact-item">
-                <span class="contact-icon">📞</span>
-                <span class="contact-label">Teléfono:</span>
-                <a :href="`tel:${client.phone}`" class="contact-value phone">{{ client.phone }}</a>
-              </div>
-              <div v-if="client.altPhone" class="contact-item">
-                <span class="contact-icon">📱</span>
-                <span class="contact-label">Teléfono Alt:</span>
-                <a :href="`tel:${client.altPhone}`" class="contact-value phone">{{ client.altPhone }}</a>
-              </div>
-            </div>
-
-            <!-- Detalles Expandibles -->
-            <div v-if="expandedClients.includes(client.id)" class="client-expanded-details">
-              <div class="details-section">
-                <h4 class="details-title">
-                  <span class="details-icon">📍</span>
-                  Información de Ubicación
-                </h4>
-                <div class="details-content">
-                  <div class="detail-item">
-                    <span class="detail-label">Dirección:</span>
-                    <span class="detail-value">{{ client.address }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">Ciudad:</span>
-                    <span class="detail-value">{{ getCityText(client.city) }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="details-section">
-                <h4 class="details-title">
-                  <span class="details-icon">📊</span>
-                  Información Comercial
-                </h4>
-                <div class="details-content">
-                  <div class="detail-item">
-                    <span class="detail-label">Estado:</span>
-                    <span :class="['detail-badge', `badge-${client.status}`]">
-                      {{ getStatusIcon(client.status) }} {{ getStatusText(client.status) }}
-                    </span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">Fecha de Registro:</span>
-                    <span class="detail-value">{{ formatDate(client.created_at) }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">Total Cotizaciones:</span>
-                    <span class="detail-value">{{ client.totalQuotations || 0 }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">Última Cotización:</span>
-                    <span class="detail-value">{{ client.lastQuotation || 'Sin cotizaciones' }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Acciones Adicionales en Vista Expandida -->
-              <div class="expanded-actions">
-                <button class="expanded-action-btn create-quotation" @click="createQuotationForClient(client)">
-                  <span class="action-icon">📝</span>
-                  Nueva Cotización
-                </button>
-                <button class="expanded-action-btn view-history" @click="viewClientHistory(client)">
-                  <span class="action-icon">📚</span>
-                  Ver Historial
-                </button>
-                <button class="expanded-action-btn send-email" @click="sendEmailToClient(client)">
-                  <span class="action-icon">✉️</span>
-                  Enviar Email
-                </button>
-              </div>
-            </div>
+          </div>
+          <div class="compact-actions">
+            <button class="compact-btn" @click="editClient(client)" title="Editar">✏️</button>
+            <button class="compact-btn" @click="createQuotationForClient(client)" title="Cotizar">📝</button>
+            <button class="compact-btn delete" @click="confirmDeleteClient(client)" title="Eliminar">🗑️</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Paginación -->
+    <!-- Paginación Avanzada -->
     <div v-if="totalPages > 1" class="pagination-panel">
       <div class="pagination-info">
-        <span>Mostrando {{ startItem }} - {{ endItem }} de {{ filteredClients.length }} clientes</span>
+        Mostrando {{ startItem }} - {{ endItem }} de {{ filteredClients.length }} clientes
       </div>
       <div class="pagination-controls">
         <button 
@@ -290,89 +351,73 @@
           :disabled="currentPage === 1"
           @click="goToPage(1)"
         >
-          ⏮️
+          ⏮️ Primera
         </button>
         <button 
           class="page-btn"
           :disabled="currentPage === 1"
           @click="goToPage(currentPage - 1)"
         >
-          ◀️
+          ◀️ Anterior
         </button>
-        <span class="page-current">{{ currentPage }} / {{ totalPages }}</span>
+        
+        <div class="page-numbers">
+          <button 
+            v-for="page in visiblePages" 
+            :key="page"
+            :class="['page-number', { active: currentPage === page }]"
+            @click="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+        </div>
+        
         <button 
           class="page-btn"
           :disabled="currentPage === totalPages"
           @click="goToPage(currentPage + 1)"
         >
-          ▶️
+          Siguiente ▶️
         </button>
         <button 
           class="page-btn"
           :disabled="currentPage === totalPages"
           @click="goToPage(totalPages)"
         >
-          ⏭️
+          Última ⏭️
         </button>
-      </div>
-      <div class="items-per-page">
-        <label>Mostrar:</label>
-        <select v-model="itemsPerPage" class="items-select" @change="changeItemsPerPage">
-          <option value="10">10</option>
-          <option value="20">20</option>
-          <option value="50">50</option>
-        </select>
-        <span>por página</span>
       </div>
     </div>
 
-    <!-- Modal de Edición de Cliente -->
-    <div v-if="clientToEdit" class="edit-modal-overlay" @click="cancelEdit">
-      <div class="edit-modal-content" @click.stop>
-        <div class="edit-modal-header">
+    <!-- Modal de Edición Completo -->
+    <div v-if="clientToEdit" class="modal-overlay" @click="cancelEdit">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
           <h3>✏️ Editar Cliente</h3>
           <button class="modal-close" @click="cancelEdit">✕</button>
         </div>
         
-        <div class="edit-modal-body">
-          <form @submit.prevent="saveClientChanges" class="edit-client-form">
-            <!-- Información básica -->
+        <form @submit.prevent="saveClientChanges" class="edit-form">
+          <div class="form-sections">
+            <!-- Información Básica -->
             <div class="form-section">
-              <h4>📋 Información Básica</h4>
+              <h4>🏢 Información de la Empresa</h4>
               <div class="form-grid">
                 <div class="form-field">
-                  <label for="editName">Razón Social *</label>
-                  <input 
-                    id="editName"
-                    v-model="editForm.name" 
-                    type="text" 
-                    required 
-                    class="form-input"
-                  />
+                  <label>Razón Social *</label>
+                  <input v-model="editForm.name" type="text" required />
                 </div>
                 <div class="form-field">
-                  <label for="editNit">NIT *</label>
-                  <input 
-                    id="editNit"
-                    v-model="editForm.nit" 
-                    type="text" 
-                    required 
-                    class="form-input"
-                  />
+                  <label>NIT *</label>
+                  <input v-model="editForm.nit" type="text" required />
                 </div>
                 <div class="form-field">
-                  <label for="editRepresentative">Representante Legal *</label>
-                  <input 
-                    id="editRepresentative"
-                    v-model="editForm.legalRepresentative" 
-                    type="text" 
-                    required 
-                    class="form-input"
-                  />
+                  <label>Representante Legal *</label>
+                  <input v-model="editForm.legalRepresentative" type="text" required />
                 </div>
                 <div class="form-field">
-                  <label for="editStatus">Estado</label>
-                  <select id="editStatus" v-model="editForm.status" class="form-select">
+                  <label>Estado</label>
+                  <select v-model="editForm.status" required>
                     <option value="activo">✅ Activo</option>
                     <option value="inactivo">⚠️ Inactivo</option>
                     <option value="pendiente">🔄 Pendiente</option>
@@ -382,59 +427,25 @@
               </div>
             </div>
 
-            <!-- Información de contacto -->
+            <!-- Información de Contacto -->
             <div class="form-section">
               <h4>📞 Información de Contacto</h4>
               <div class="form-grid">
                 <div class="form-field">
-                  <label for="editEmail">Email *</label>
-                  <input 
-                    id="editEmail"
-                    v-model="editForm.email" 
-                    type="email" 
-                    required 
-                    class="form-input"
-                  />
+                  <label>Email *</label>
+                  <input v-model="editForm.email" type="email" required />
                 </div>
                 <div class="form-field">
-                  <label for="editPhone">Teléfono Principal *</label>
-                  <input 
-                    id="editPhone"
-                    v-model="editForm.phone" 
-                    type="tel" 
-                    required 
-                    class="form-input"
-                  />
+                  <label>Teléfono Principal *</label>
+                  <input v-model="editForm.phone" type="tel" required />
                 </div>
                 <div class="form-field">
-                  <label for="editAltPhone">Teléfono Alternativo</label>
-                  <input 
-                    id="editAltPhone"
-                    v-model="editForm.altPhone" 
-                    type="tel" 
-                    class="form-input"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Información de ubicación -->
-            <div class="form-section">
-              <h4>📍 Información de Ubicación</h4>
-              <div class="form-grid">
-                <div class="form-field form-field-full">
-                  <label for="editAddress">Dirección *</label>
-                  <textarea 
-                    id="editAddress"
-                    v-model="editForm.address" 
-                    required 
-                    class="form-textarea"
-                    rows="2"
-                  ></textarea>
+                  <label>Teléfono Alternativo</label>
+                  <input v-model="editForm.altPhone" type="tel" />
                 </div>
                 <div class="form-field">
-                  <label for="editCity">Ciudad</label>
-                  <select id="editCity" v-model="editForm.city" class="form-select">
+                  <label>Ciudad</label>
+                  <select v-model="editForm.city">
                     <option value="bogota">Bogotá D.C.</option>
                     <option value="medellin">Medellín</option>
                     <option value="cali">Cali</option>
@@ -445,45 +456,55 @@
                   </select>
                 </div>
               </div>
+              <div class="form-field full-width">
+                <label>Dirección</label>
+                <textarea v-model="editForm.address" rows="3" placeholder="Dirección completa..."></textarea>
+              </div>
             </div>
-          </form>
-        </div>
-        
-        <div class="edit-modal-actions">
-          <button type="button" class="btn-cancel" @click="cancelEdit">
-            ❌ Cancelar
-          </button>
-          <button type="button" class="btn-save" @click="saveClientChanges" :disabled="isSaving">
-            {{ isSaving ? '💾 Guardando...' : '💾 Guardar Cambios' }}
-          </button>
-        </div>
+          </div>
+          
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" @click="cancelEdit">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-primary" :disabled="isSaving">
+              {{ isSaving ? '💾 Guardando...' : '💾 Guardar Cambios' }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
-    <!-- Modal de Confirmación para Eliminar -->
+    <!-- Modal de Confirmación de Eliminación -->
     <div v-if="clientToDelete" class="modal-overlay" @click="cancelDelete">
-      <div class="modal-content" @click.stop>
+      <div class="modal-content confirm-modal" @click.stop>
         <div class="modal-header">
           <h3>⚠️ Confirmar Eliminación</h3>
           <button class="modal-close" @click="cancelDelete">✕</button>
         </div>
-        <div class="modal-body">
-          <p>¿Estás seguro de que deseas eliminar el cliente?</p>
-          <div class="client-to-delete-info">
-            <strong>{{ clientToDelete.name }}</strong><br>
-            <span>NIT: {{ clientToDelete.nit }}</span><br>
-            <span>Representante: {{ clientToDelete.legalRepresentative }}</span>
+        
+        <div class="confirm-content">
+          <div class="warning-icon">🗑️</div>
+          <p>¿Estás seguro de que deseas eliminar este cliente?</p>
+          
+          <div class="client-preview">
+            <h4>{{ clientToDelete.name }}</h4>
+            <p>NIT: {{ clientToDelete.nit }}</p>
+            <p>Representante: {{ clientToDelete.legalRepresentative }}</p>
           </div>
-          <p class="warning-text">
-            ⚠️ Esta acción no se puede deshacer y eliminará toda la información asociada al cliente.
-          </p>
+          
+          <div class="warning-text">
+            <p><strong>⚠️ Esta acción no se puede deshacer.</strong></p>
+            <p>Se eliminará toda la información del cliente y su historial.</p>
+          </div>
         </div>
+        
         <div class="modal-actions">
           <button class="btn-cancel" @click="cancelDelete">
-            ❌ Cancelar
+            Cancelar
           </button>
-          <button class="btn-confirm-delete" @click="confirmDelete">
-            🗑️ Eliminar Cliente
+          <button class="btn-danger" @click="confirmDelete">
+            🗑️ Sí, Eliminar Cliente
           </button>
         </div>
       </div>
@@ -496,39 +517,15 @@ export default {
   name: 'ClientReadView',
   data() {
     return {
+      // Estados de carga y UI
       isLoading: false,
-      searchQuery: '', // Búsqueda unificada
-      expandedClients: [], // IDs de clientes con detalles expandidos
-      clientToDelete: null, // Cliente pendiente de eliminación
-      clientToEdit: null, // Cliente que se está editando
-      isSaving: false, // Estado de guardado
+      isSaving: false,
       
-      // Formulario de edición
-      editForm: {
-        name: '',
-        nit: '',
-        legalRepresentative: '',
-        email: '',
-        phone: '',
-        altPhone: '',
-        address: '',
-        city: '',
-        status: 'activo'
-      },
-      
-      // Filtros simplificados
-      filters: {
-        status: '' // Solo filtro por estado
-      },
-      
-      // Filtros rápidos para estado
-      quickStatusFilters: [
-        { value: '', label: 'Todos', icon: '🏢' },
-        { value: 'activo', label: 'Activos', icon: '✅' },
-        { value: 'inactivo', label: 'Inactivos', icon: '⚠️' },
-        { value: 'pendiente', label: 'Pendientes', icon: '🔄' },
-        { value: 'bloqueado', label: 'Bloqueados', icon: '❌' }
-      ],
+      // Búsqueda y filtros
+      searchQuery: '',
+      selectedStatus: '',
+      selectedCity: '',
+      dateRange: '',
       
       // Ordenamiento
       sortBy: 'name',
@@ -536,408 +533,388 @@ export default {
       
       // Paginación
       currentPage: 1,
-      itemsPerPage: 20,
+      itemsPerPage: 12,
       
-      // Datos mock mejorados con información adicional
+      // Vista y comportamiento
+      viewMode: 'cards', // 'cards', 'table', 'compact'
+      expandedClients: [],
+      
+      // Modales
+      clientToEdit: null,
+      clientToDelete: null,
+      editForm: {},
+      
+      // Configuración de filtros
+      statusFilters: [
+        { value: '', label: 'Todos', icon: '📋' },
+        { value: 'activo', label: 'Activos', icon: '✅' },
+        { value: 'inactivo', label: 'Inactivos', icon: '⚠️' },
+        { value: 'pendiente', label: 'Pendientes', icon: '🔄' },
+        { value: 'bloqueado', label: 'Bloqueados', icon: '❌' },
+      ],
+      
+      availableCities: [
+        { value: 'bogota', label: 'Bogotá D.C.' },
+        { value: 'medellin', label: 'Medellín' },
+        { value: 'cali', label: 'Cali' },
+        { value: 'barranquilla', label: 'Barranquilla' },
+        { value: 'cartagena', label: 'Cartagena' },
+        { value: 'bucaramanga', label: 'Bucaramanga' },
+        { value: 'otra', label: 'Otra Ciudad' },
+      ],
+      
+      // Datos de clientes (simulados)
       clients: [
         {
           id: 1,
           name: 'Constructora Los Andes S.A.S',
           nit: '900123456-7',
-          legalRepresentative: 'Carlos Mendoza',
+          legalRepresentative: 'Carlos Mendoza Ruiz',
           email: 'contacto@losandes.com',
           phone: '+57 320 456 7890',
           altPhone: '(1) 234-5678',
-          address: 'Calle 123 #45-67, Oficina 301, Centro Empresarial Torre Norte, Bogotá D.C.',
+          address: 'Calle 123 #45-67, Centro Empresarial Torre Norte, Oficina 1205',
           city: 'bogota',
           status: 'activo',
-          created_at: '2024-01-15',
-          totalQuotations: 15,
-          lastQuotation: '2024-12-10'
+          created_at: '2024-01-15T10:30:00Z',
+          lastActivity: '2024-06-10T14:22:00Z',
+          totalQuotations: 15
         },
         {
           id: 2,
           name: 'Ferreterías del Valle LTDA',
           nit: '800987654-3',
-          legalRepresentative: 'María Rodríguez',
+          legalRepresentative: 'María Elena Rodríguez',
           email: 'info@ferreteriavalle.com',
           phone: '+57 310 123 4567',
           altPhone: '(2) 567-8901',
-          address: 'Carrera 45 #67-89, Local 102, Centro Comercial La Plaza, Cali',
+          address: 'Carrera 45 #67-89, Local 102, Centro Comercial Valle Plaza',
           city: 'cali',
           status: 'activo',
-          created_at: '2024-02-20',
-          totalQuotations: 8,
-          lastQuotation: '2024-11-28'
+          created_at: '2024-02-20T08:15:00Z',
+          lastActivity: '2024-06-14T16:45:00Z',
+          totalQuotations: 8
         },
         {
           id: 3,
           name: 'Distribuidora Industrial del Norte',
           nit: '700456789-1',
-          legalRepresentative: 'Luis Fernando García',
+          legalRepresentative: 'Luis Fernando García Torres',
           email: 'ventas@distinorte.com',
           phone: '+57 305 987 6543',
           altPhone: '(4) 345-6789',
-          address: 'Avenida Industrial #12-34, Sector Empresarial, Medellín',
+          address: 'Avenida Industrial #12-34, Zona Franca La Cayena',
           city: 'medellin',
           status: 'inactivo',
-          created_at: '2024-01-30',
-          totalQuotations: 3,
-          lastQuotation: '2024-08-15'
+          created_at: '2024-01-30T12:45:00Z',
+          lastActivity: '2024-05-20T09:30:00Z',
+          totalQuotations: 3
         },
         {
           id: 4,
           name: 'Comercializadora Caribe S.A.',
           nit: '600321654-9',
-          legalRepresentative: 'Ana Sofía López',
+          legalRepresentative: 'Ana Sofía López Martínez',
           email: 'administracion@comercaribe.com',
           phone: '+57 315 654 3210',
           altPhone: '(5) 123-4567',
-          address: 'Calle 72 #3B-45, Edificio Empresarial del Caribe, Barranquilla',
+          address: 'Calle 72 #3B-45, Edificio Empresarial Caribe, Piso 8',
           city: 'barranquilla',
           status: 'pendiente',
-          created_at: '2024-03-05',
-          totalQuotations: 0,
-          lastQuotation: null
+          created_at: '2024-03-05T15:20:00Z',
+          lastActivity: '2024-06-12T11:15:00Z',
+          totalQuotations: 0
         },
         {
           id: 5,
           name: 'Suministros Técnicos Santander',
           nit: '500789123-2',
-          legalRepresentative: 'Roberto Jiménez',
+          legalRepresentative: 'Roberto Jiménez Peña',
           email: 'roberto@sumitecnicos.com',
           phone: '+57 300 111 2233',
           altPhone: '(7) 890-1234',
-          address: 'Carrera 27 #45-123, Zona Industrial Norte, Bucaramanga',
+          address: 'Carrera 27 #45-123, Sector Industrial Café Madrid',
           city: 'bucaramanga',
           status: 'bloqueado',
-          created_at: '2024-02-10',
-          totalQuotations: 12,
-          lastQuotation: '2024-09-20'
+          created_at: '2024-02-10T14:00:00Z',
+          lastActivity: '2024-04-15T10:20:00Z',
+          totalQuotations: 2
         },
         {
           id: 6,
-          name: 'Inversiones Turísticas del Caribe',
-          nit: '400555666-8',
-          legalRepresentative: 'Patricia Hernández',
-          email: 'patricia@invturcaribe.com',
-          phone: '+57 318 777 8888',
-          altPhone: '(5) 999-0000',
-          address: 'Centro Histórico, Plaza de los Coches #2-15, Cartagena',
-          city: 'cartagena',
+          name: 'Importaciones y Exportaciones del Pacífico',
+          nit: '900555666-4',
+          legalRepresentative: 'Diana Patricia Vargas',
+          email: 'gerencia@imexpacifico.com',
+          phone: '+57 312 888 9999',
+          altPhone: '(2) 444-5555',
+          address: 'Puerto de Buenaventura, Zona Portuaria Lote 15',
+          city: 'otra',
           status: 'activo',
-          created_at: '2024-03-12',
-          totalQuotations: 5,
-          lastQuotation: '2024-12-01'
+          created_at: '2024-03-18T09:30:00Z',
+          lastActivity: '2024-06-15T13:40:00Z',
+          totalQuotations: 12
+        },
+        {
+          id: 7,
+          name: 'Textiles y Confecciones Andinas',
+          nit: '800222333-8',
+          legalRepresentative: 'Alejandro Morales Sánchez',
+          email: 'ventas@textilesandinas.com',
+          phone: '+57 318 777 4444',
+          altPhone: '(4) 666-7777',
+          address: 'Itagüí, Carrera 50 #23-67, Parque Industrial Zona Sur',
+          city: 'medellin',
+          status: 'activo',
+          created_at: '2024-01-08T11:25:00Z',
+          lastActivity: '2024-06-13T15:50:00Z',
+          totalQuotations: 7
         }
       ]
     }
   },
   
   computed: {
-    // Filtrar clientes con búsqueda unificada
+    // Filtrado principal de clientes
     filteredClients() {
       let filtered = [...this.clients]
       
-      // Filtro por búsqueda unificada (todos los campos)
+      // Filtro por búsqueda de texto
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase()
-        filtered = filtered.filter(c => 
-          c.name.toLowerCase().includes(query) ||
-          c.nit.toLowerCase().includes(query) ||
-          c.email.toLowerCase().includes(query) ||
-          c.phone.toLowerCase().includes(query) ||
-          c.legalRepresentative.toLowerCase().includes(query) ||
-          c.address.toLowerCase().includes(query)
+        filtered = filtered.filter(client => 
+          client.name.toLowerCase().includes(query) ||
+          client.nit.includes(query) ||
+          client.email.toLowerCase().includes(query) ||
+          client.phone.includes(query) ||
+          client.legalRepresentative.toLowerCase().includes(query)
         )
       }
       
       // Filtro por estado
-      if (this.filters.status) {
-        filtered = filtered.filter(c => c.status === this.filters.status)
+      if (this.selectedStatus) {
+        filtered = filtered.filter(client => client.status === this.selectedStatus)
       }
       
-      // Ordenamiento
-      filtered.sort((a, b) => {
-        let aValue = a[this.sortBy] || ''
-        let bValue = b[this.sortBy] || ''
-        
-        if (typeof aValue === 'string') {
-          aValue = aValue.toLowerCase()
-          bValue = bValue.toLowerCase()
-        }
-        
-        if (this.sortDirection === 'asc') {
-          return aValue > bValue ? 1 : -1
-        } else {
-          return aValue < bValue ? 1 : -1
-        }
-      })
+      // Filtro por ciudad
+      if (this.selectedCity) {
+        filtered = filtered.filter(client => client.city === this.selectedCity)
+      }
       
-      return filtered
+      // Filtro por rango de fechas
+      if (this.dateRange) {
+        const now = new Date()
+        const clientDate = (client) => new Date(client.created_at)
+        
+        filtered = filtered.filter(client => {
+          const date = clientDate(client)
+          
+          switch (this.dateRange) {
+            case 'today':
+              return date.toDateString() === now.toDateString()
+            case 'week': {
+              const weekAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000))
+              return date >= weekAgo
+            }
+            case 'month': {
+              const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
+              return date >= monthAgo
+            }
+            case 'year': {
+              const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
+              return date >= yearAgo
+            }
+            default:
+              return true
+          }
+        })
+      }
+      
+      // Aplicar ordenamiento
+      return this.sortClients(filtered)
     },
     
+    // Ordenamiento de clientes
+    sortClients() {
+      return (clients) => {
+        return [...clients].sort((a, b) => {
+          let aValue, bValue
+          
+          switch (this.sortBy) {
+            case 'name':
+              aValue = a.name.toLowerCase()
+              bValue = b.name.toLowerCase()
+              break
+            case 'created_at':
+              aValue = new Date(a.created_at)
+              bValue = new Date(b.created_at)
+              break
+            case 'status':
+              aValue = a.status
+              bValue = b.status
+              break
+            case 'lastActivity':
+              aValue = new Date(a.lastActivity || a.created_at)
+              bValue = new Date(b.lastActivity || b.created_at)
+              break
+            default:
+              aValue = a[this.sortBy]
+              bValue = b[this.sortBy]
+          }
+          
+          if (aValue < bValue) return this.sortDirection === 'asc' ? -1 : 1
+          if (aValue > bValue) return this.sortDirection === 'asc' ? 1 : -1
+          return 0
+        })
+      }
+    },
+    
+    // Clientes paginados
     paginatedClients() {
       const start = (this.currentPage - 1) * this.itemsPerPage
-      const end = start + this.itemsPerPage
-      return this.filteredClients.slice(start, end)
+      return this.filteredClients.slice(start, start + this.itemsPerPage)
     },
     
-    totalClients() {
-      return this.clients.length
-    },
-    
+    // Información de paginación
     totalPages() {
       return Math.ceil(this.filteredClients.length / this.itemsPerPage)
     },
     
     startItem() {
-      return (this.currentPage - 1) * this.itemsPerPage + 1
+      return Math.min((this.currentPage - 1) * this.itemsPerPage + 1, this.filteredClients.length)
     },
     
     endItem() {
       return Math.min(this.currentPage * this.itemsPerPage, this.filteredClients.length)
     },
     
-    hasActiveSearch() {
-      return this.searchQuery.length > 0 || this.filters.status !== ''
+    visiblePages() {
+      const pages = []
+      const totalPages = this.totalPages
+      const current = this.currentPage
+      
+      // Mostrar máximo 5 páginas
+      let start = Math.max(1, current - 2)
+      let end = Math.min(totalPages, start + 4)
+      
+      // Ajustar si estamos cerca del final
+      if (end - start < 4) {
+        start = Math.max(1, end - 4)
+      }
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i)
+      }
+      
+      return pages
+    },
+    
+    // Estado de filtros activos
+    hasActiveFilters() {
+      return !!(this.searchQuery || this.selectedStatus || this.selectedCity || this.dateRange)
     }
   },
   
   methods: {
-    // Manejo de búsqueda unificada
+    // === MÉTODOS DE BÚSQUEDA Y FILTROS ===
+    
     handleSearch() {
       this.currentPage = 1
-      clearTimeout(this.searchTimeout)
-      this.searchTimeout = setTimeout(() => {
-        console.log('🔍 Búsqueda unificada:', this.searchQuery)
-      }, 300)
+      console.log('🔍 Búsqueda actualizada:', this.searchQuery)
     },
     
     performSearch() {
       this.handleSearch()
-      console.log('🔍 Búsqueda manual ejecutada')
+      console.log('🎯 Búsqueda ejecutada:', this.searchQuery)
     },
     
-    clearSearch() {
+    setStatusFilter(status) {
+      this.selectedStatus = this.selectedStatus === status ? '' : status
+      this.currentPage = 1
+      console.log('📊 Filtro de estado:', status || 'todos')
+    },
+    
+    applyFilters() {
+      this.currentPage = 1
+      console.log('🔧 Filtros aplicados')
+    },
+    
+    clearAllFilters() {
       this.searchQuery = ''
-      this.filters.status = ''
+      this.selectedStatus = ''
+      this.selectedCity = ''
+      this.dateRange = ''
       this.currentPage = 1
-      console.log('🗑️ Búsqueda limpiada')
+      console.log('🗑️ Todos los filtros limpiados')
     },
     
-    // Filtros rápidos por estado
-    setQuickFilter(status) {
-      this.filters.status = this.filters.status === status ? '' : status
-      this.currentPage = 1
-      console.log(`📊 Filtro rápido aplicado: ${status || 'todos'}`)
-    },
+    // === MÉTODOS DE ORDENAMIENTO ===
     
-    getStatusCount(status) {
-      if (!status) return this.clients.length
-      return this.clients.filter(c => c.status === status).length
-    },
-    
-    // Manejo de detalles expandibles
-    toggleClientDetails(clientId) {
-      const index = this.expandedClients.indexOf(clientId)
-      if (index > -1) {
-        this.expandedClients.splice(index, 1)
-        console.log(`👁️‍🗨️ Ocultando detalles del cliente ID: ${clientId}`)
-      } else {
-        this.expandedClients.push(clientId)
-        console.log(`👁️ Expandiendo detalles del cliente ID: ${clientId}`)
-      }
-    },
-    
-    // ✅ MÉTODOS DE EDICIÓN
-    
-    // Abrir modal de edición
-    editClient(client) {
-      console.log('✏️ Abriendo formulario de edición para:', client.name)
-      
-      // Clonar datos del cliente al formulario
-      this.editForm = {
-        name: client.name,
-        nit: client.nit,
-        legalRepresentative: client.legalRepresentative,
-        email: client.email,
-        phone: client.phone,
-        altPhone: client.altPhone || '',
-        address: client.address,
-        city: client.city,
-        status: client.status
-      }
-      
-      // Establecer cliente a editar
-      this.clientToEdit = client
-    },
-    
-    // Cancelar edición
-    cancelEdit() {
-      console.log('❌ Cancelando edición')
-      this.clientToEdit = null
-      this.resetEditForm()
-    },
-    
-    // Limpiar formulario de edición
-    resetEditForm() {
-      this.editForm = {
-        name: '',
-        nit: '',
-        legalRepresentative: '',
-        email: '',
-        phone: '',
-        altPhone: '',
-        address: '',
-        city: '',
-        status: 'activo'
-      }
-    },
-    
-    // Guardar cambios del cliente
-    async saveClientChanges() {
-      if (!this.clientToEdit) return
-      
-      this.isSaving = true
-      
-      try {
-        console.log('💾 Guardando cambios del cliente:', this.clientToEdit.name)
-        
-        // Validación básica
-        if (!this.editForm.name || !this.editForm.nit || !this.editForm.email) {
-          alert('Por favor completa todos los campos obligatorios (*)')
-          return
-        }
-        
-        // TODO: Implementar guardado en backend
-        // await axios.put(`/clients/${this.clientToEdit.id}/`, this.editForm)
-        
-        // Simular guardado (temporal)
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        // Actualizar cliente en la lista local
-        const clientIndex = this.clients.findIndex(c => c.id === this.clientToEdit.id)
-        if (clientIndex > -1) {
-          this.clients[clientIndex] = {
-            ...this.clients[clientIndex],
-            ...this.editForm
-          }
-        }
-        
-        console.log('✅ Cliente actualizado exitosamente')
-        
-        // Cerrar modal
-        this.cancelEdit()
-        
-        // Mostrar notificación de éxito (opcional)
-        alert(`Cliente "${this.editForm.name}" actualizado exitosamente`)
-        
-      } catch (error) {
-        console.error('❌ Error guardando cambios:', error)
-        alert('Error al actualizar el cliente. Intenta nuevamente.')
-      } finally {
-        this.isSaving = false
-      }
-    },
-    
-    // ✅ MÉTODOS DE ELIMINACIÓN
-    
-    confirmDeleteClient(client) {
-      this.clientToDelete = client
-      console.log('🗑️ Solicitando confirmación para eliminar:', client.name)
-    },
-    
-    cancelDelete() {
-      this.clientToDelete = null
-      console.log('❌ Eliminación cancelada')
-    },
-    
-    async confirmDelete() {
-      if (!this.clientToDelete) return
-      
-      const clientName = this.clientToDelete.name
-      const clientId = this.clientToDelete.id
-      
-      try {
-        console.log(`🗑️ Eliminando cliente: ${clientName}`)
-        
-        // TODO: Implementar eliminación en backend
-        // await axios.delete(`/clients/${clientId}/`)
-        
-        // Simular eliminación local (temporal)
-        const index = this.clients.findIndex(c => c.id === clientId)
-        if (index > -1) {
-          this.clients.splice(index, 1)
-        }
-        
-        // Remover de expandidos si estaba
-        const expandedIndex = this.expandedClients.indexOf(clientId)
-        if (expandedIndex > -1) {
-          this.expandedClients.splice(expandedIndex, 1)
-        }
-        
-        this.clientToDelete = null
-        console.log(`✅ Cliente "${clientName}" eliminado exitosamente`)
-        
-        // Mostrar notificación de éxito
-        alert(`Cliente "${clientName}" eliminado exitosamente`)
-        
-      } catch (error) {
-        console.error('❌ Error eliminando cliente:', error)
-        alert('Error al eliminar el cliente. Intenta nuevamente.')
-      }
-    },
-    
-    // Navegación
-    goToCreateClient() {
-      console.log('➕ Navegando a crear nuevo cliente')
-      this.$router.push('/dashboard/clientes/nuevo')
-    },
-    
-    // Acciones adicionales
-    createQuotationForClient(client) {
-      console.log(`📝 Crear cotización para: ${client.name}`)
-      // TODO: Implementar navegación a crear cotización con cliente preseleccionado
-      // this.$router.push(`/dashboard/quotations/new?client=${client.id}`)
-      alert(`Funcionalidad en desarrollo.\nCrear cotización para: ${client.name}`)
-    },
-    
-    viewClientHistory(client) {
-      console.log(`📚 Ver historial de: ${client.name}`)
-      // TODO: Implementar vista de historial del cliente
-      alert(`Funcionalidad en desarrollo.\nVer historial de: ${client.name}`)
-    },
-    
-    sendEmailToClient(client) {
-      console.log(`✉️ Enviar email a: ${client.email}`)
-      window.location.href = `mailto:${client.email}`
-    },
-    
-    // Ordenamiento
     applySorting() {
-      console.log(`📊 Ordenando por ${this.sortBy} (${this.sortDirection})`)
+      console.log('📊 Ordenando por:', this.sortBy, this.sortDirection)
+    },
+    
+    setSortBy(field) {
+      if (this.sortBy === field) {
+        this.toggleSortDirection()
+      } else {
+        this.sortBy = field
+        this.sortDirection = 'asc'
+      }
+      console.log('🔀 Orden cambiado:', field, this.sortDirection)
     },
     
     toggleSortDirection() {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
-      this.applySorting()
+      console.log('🔄 Dirección de orden:', this.sortDirection)
     },
     
-    // Paginación
-    goToPage(page) {
-      if (page >= 1 && page <= this.totalPages) {
-        this.currentPage = page
-        console.log(`📄 Navegando a página ${page}`)
-      }
+    // === MÉTODOS DE VISTA ===
+    
+    setViewMode(mode) {
+      this.viewMode = mode
+      this.expandedClients = [] // Colapsar todos al cambiar vista
+      console.log('👁️ Modo de vista:', mode)
     },
     
     changeItemsPerPage() {
       this.currentPage = 1
-      console.log(`📋 Mostrando ${this.itemsPerPage} clientes por página`)
+      console.log('📄 Items por página:', this.itemsPerPage)
     },
     
-    // Funciones auxiliares
+    toggleClientDetails(clientId) {
+      const index = this.expandedClients.indexOf(clientId)
+      if (index > -1) {
+        this.expandedClients.splice(index, 1)
+      } else {
+        this.expandedClients.push(clientId)
+      }
+      console.log('🔍 Detalles cliente:', clientId)
+    },
+    
+    // === MÉTODOS DE PAGINACIÓN ===
+    
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page
+        console.log('📄 Página:', page)
+        
+        // Scroll suave al inicio de la lista
+        this.$nextTick(() => {
+          const clientsSection = this.$el.querySelector('.clients-section')
+          if (clientsSection) {
+            clientsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        })
+      }
+    },
+    
+    // === MÉTODOS DE DATOS AUXILIARES ===
+    
+    getStatusCount(status) {
+      return status ? this.clients.filter(c => c.status === status).length : this.clients.length
+    },
+    
     getStatusIcon(status) {
       const icons = {
         activo: '✅',
@@ -959,493 +936,471 @@ export default {
     },
     
     getCityText(city) {
-      const texts = {
-        bogota: 'Bogotá D.C.',
-        medellin: 'Medellín',
-        cali: 'Cali',
-        barranquilla: 'Barranquilla',
-        cartagena: 'Cartagena',
-        bucaramanga: 'Bucaramanga',
-        otra: 'Otra Ciudad'
-      }
-      return texts[city] || city
+      const cityObj = this.availableCities.find(c => c.value === city)
+      return cityObj ? cityObj.label : 'Ciudad no especificada'
     },
     
-    getInitials(name) {
-      if (!name) return '??'
+    getClientInitials(name) {
       return name
         .split(' ')
         .map(word => word.charAt(0))
         .join('')
+        .substring(0, 3)
         .toUpperCase()
-        .slice(0, 2)
     },
     
-    formatDate(dateStr) {
-      if (!dateStr) return 'No registrado'
-      return new Intl.DateTimeFormat('es-CO', {
+    formatDate(dateString) {
+      if (!dateString) return 'Sin fecha'
+      
+      const date = new Date(dateString)
+      const options = {
         year: 'numeric',
-        month: 'short',
+        month: 'long',
         day: 'numeric'
-      }).format(new Date(dateStr))
+      }
+      
+      return date.toLocaleDateString('es-ES', options)
     },
     
-    // Cargar clientes desde backend (preparado)
-    async fetchClientsFromBackend() {
-      this.isLoading = true
+    // === MÉTODOS DE ACCIONES DE CLIENTE ===
+    
+    editClient(client) {
+      console.log('✏️ Editando cliente:', client.name)
+      this.editForm = { ...client }
+      this.clientToEdit = client
+    },
+    
+    cancelEdit() {
+      this.clientToEdit = null
+      this.editForm = {}
+      this.isSaving = false
+      console.log('❌ Edición cancelada')
+    },
+    
+    async saveClientChanges() {
+      this.isSaving = true
+      
       try {
-        console.log('🔄 Cargando clientes desde el backend...')
+        console.log('💾 Guardando cambios del cliente:', this.editForm.name)
         
-        // TODO: Implementar cuando el backend esté listo
-        // const response = await axios.get('/clients/')
-        // this.clients = response.data
+        // Validaciones básicas
+        if (!this.editForm.name || !this.editForm.nit || !this.editForm.email) {
+          throw new Error('Campos obligatorios faltantes')
+        }
         
-        console.log('✅ Clientes cargados exitosamente')
+        // Simular llamada a API
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        
+        // Actualizar cliente en la lista
+        const index = this.clients.findIndex(c => c.id === this.clientToEdit.id)
+        if (index > -1) {
+          this.clients[index] = { ...this.editForm }
+          console.log('✅ Cliente actualizado exitosamente')
+        }
+        
+        this.cancelEdit()
+        
       } catch (error) {
-        console.error('❌ Error cargando clientes:', error)
+        console.error('❌ Error guardando cliente:', error)
+        alert('Error al actualizar el cliente: ' + error.message)
       } finally {
-        this.isLoading = false
+        this.isSaving = false
+      }
+    },
+    
+    confirmDeleteClient(client) {
+      console.log('🗑️ Solicitud de eliminación:', client.name)
+      this.clientToDelete = client
+    },
+    
+    cancelDelete() {
+      this.clientToDelete = null
+      console.log('❌ Eliminación cancelada')
+    },
+    
+    confirmDelete() {
+      if (!this.clientToDelete) return
+      
+      const clientName = this.clientToDelete.name
+      const index = this.clients.findIndex(c => c.id === this.clientToDelete.id)
+      
+      if (index > -1) {
+        this.clients.splice(index, 1)
+        console.log('✅ Cliente eliminado:', clientName)
+        
+        // Ajustar página si es necesario
+        if (this.paginatedClients.length === 0 && this.currentPage > 1) {
+          this.currentPage--
+        }
+      }
+      
+      this.clientToDelete = null
+    },
+    
+    // === MÉTODOS DE NAVEGACIÓN ===
+    
+    goToCreateClient() {
+      console.log('➕ Navegando a crear cliente')
+      this.$router.push('/dashboard/clients/create')
+    },
+    
+    createQuotationForClient(client) {
+      console.log('📝 Crear cotización para:', client.name)
+      // Navegar con parámetros del cliente
+      this.$router.push({
+        path: '/dashboard/quotation/create',
+        query: { client_id: client.id, client_name: client.name }
+      })
+    },
+    
+    // === MÉTODOS DE FUNCIONALIDADES AVANZADAS ===
+    
+    viewClientHistory(client) {
+      console.log('📚 Ver historial de:', client.name)
+      // Implementar vista de historial
+      alert(`Historial de ${client.name}\n\n📊 Cotizaciones: ${client.totalQuotations || 0}\n📅 Registro: ${this.formatDate(client.created_at)}\n📞 Última actividad: ${this.formatDate(client.lastActivity)}`)
+    },
+    
+    sendEmailToClient(client) {
+      console.log('✉️ Enviar email a:', client.email)
+      // Abrir cliente de email
+      const subject = encodeURIComponent('Contacto desde StackFlow')
+      const body = encodeURIComponent(`Estimado/a ${client.legalRepresentative},\n\nEsperamos que se encuentre bien.\n\nSaludos cordiales,\nEquipo StackFlow`)
+      
+      window.open(`mailto:${client.email}?subject=${subject}&body=${body}`)
+    },
+    
+    exportClients() {
+      console.log('📊 Exportando clientes:', this.filteredClients.length)
+      
+      try {
+        // Crear CSV con los datos filtrados
+        const headers = ['Empresa', 'NIT', 'Representante', 'Email', 'Teléfono', 'Ciudad', 'Estado', 'Fecha Registro']
+        const csvData = [
+          headers.join(','),
+          ...this.filteredClients.map(client => [
+            `"${client.name}"`,
+            client.nit,
+            `"${client.legalRepresentative}"`,
+            client.email,
+            client.phone,
+            this.getCityText(client.city),
+            this.getStatusText(client.status),
+            this.formatDate(client.created_at)
+          ].join(','))
+        ].join('\n')
+        
+        // Descargar archivo
+        const blob = new Blob([csvData], { type: 'text/csv' })
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `clientes_stackflow_${new Date().toISOString().split('T')[0]}.csv`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
+        
+        console.log('✅ Exportación completada')
+        
+      } catch (error) {
+        console.error('❌ Error en exportación:', error)
+        alert('Error al exportar los datos')
       }
     }
   },
   
+  // === CICLO DE VIDA ===
+  
   mounted() {
-    console.log('📍 ClientReadView unificado montado correctamente')
-    // this.fetchClientsFromBackend()
+    console.log('📋 ClientReadView cargado con', this.clients.length, 'clientes')
+    
+    // Cargar datos reales si existe API
+    // this.loadClientsFromAPI()
   },
   
-  beforeUnmount() {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout)
+  // === WATCHERS ===
+  
+  watch: {
+    // Resetear página cuando cambian los filtros
+    filteredClients() {
+      if (this.currentPage > this.totalPages) {
+        this.currentPage = Math.max(1, this.totalPages)
+      }
     }
   }
 }
 </script>
 
 <style scoped>
-/* ========================================
-   🎨 CLIENTREADVIEW - ESTILOS COMPLETOS
-   ======================================== */
-
-/* 🔹 Variables CSS */
-:root {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --warning-color: #d97706;
-  --error-color: #dc2626;
-  --info-color: #0891b2;
-  
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-tertiary: #f1f5f9;
-  --bg-accent: #e2e8f0;
-  
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  
-  --border-color: #e2e8f0;
-  --border-hover: #cbd5e1;
-  
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
-  
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
+/* === VARIABLES Y BASE === */
+.client-read-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  color: #374151;
 }
 
-/* 🔹 Contenedor Principal */
-.client-read-workspace {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  padding: var(--spacing-lg);
-  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* ========================================
-   📋 HEADER PRINCIPAL
-   ======================================== */
-.client-header {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-color);
-}
-
-.header-content {
+/* === HEADER === */
+.page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--spacing-lg);
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
 }
 
-.title-section {
-  flex: 1;
-}
-
-.main-title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 var(--spacing-sm) 0;
-}
-
-.title-icon {
-  font-size: 3rem;
-  filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+.header-left h1 {
+  font-size: 1.75rem;
+  color: #1e40af;
+  margin: 0 0 0.25rem 0;
+  font-weight: 600;
 }
 
 .subtitle {
-  font-size: 1.125rem;
-  color: var(--text-secondary);
+  color: #6b7280;
   margin: 0;
-  max-width: 600px;
+  font-size: 0.9rem;
 }
 
-.stats-badge {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-  color: white;
-  padding: var(--spacing-md) var(--spacing-xl);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  text-align: center;
-  min-width: 120px;
+.header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
 }
 
-.badge-label {
-  display: block;
-  font-size: 0.875rem;
-  opacity: 0.9;
-  margin-bottom: var(--spacing-xs);
+.stats-summary {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
 }
 
-.badge-number {
-  display: block;
-  font-size: 2rem;
-  font-weight: 700;
+.stat-item {
+  background: #f3f4f6;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  color: #374151;
 }
 
-/* ========================================
-   🔍 PANEL DE BÚSQUEDA
-   ======================================== */
+/* === PANEL DE BÚSQUEDA === */
 .search-panel {
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-color);
-  margin-bottom: var(--spacing-xl);
-  overflow: hidden;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.panel-header {
+.search-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-lg) var(--spacing-xl);
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border-bottom: 1px solid var(--border-color);
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
+  margin-bottom: 1rem;
 }
 
-.panel-header h3 {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
+.search-header h3 {
   margin: 0;
-}
-
-.section-icon {
-  font-size: 1.5rem;
+  color: #1e40af;
+  font-size: 1.1rem;
 }
 
 .search-actions {
   display: flex;
-  gap: var(--spacing-md);
-  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.btn-clear, .btn-add {
+.search-bar {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  border: none;
-  cursor: pointer;
-  font-size: 0.875rem;
-}
-
-.btn-clear {
-  background: var(--warning-color);
-  color: white;
-}
-
-.btn-clear:hover {
-  background: #b45309;
-  transform: translateY(-1px);
-}
-
-.btn-add {
-  background: var(--success-color);
-  color: white;
-}
-
-.btn-add:hover {
-  background: #047857;
-  transform: translateY(-1px);
-}
-
-.btn-icon {
-  font-size: 1rem;
-}
-
-/* 🔹 Contenido de Búsqueda */
-.search-content {
-  padding: var(--spacing-xl);
-}
-
-.unified-search {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.search-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.search-field label {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 1.125rem;
-}
-
-.field-icon {
-  font-size: 1.25rem;
-}
-
-.search-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .search-input {
   flex: 1;
-  padding: var(--spacing-md) var(--spacing-lg);
-  padding-right: 3.5rem;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
   font-size: 1rem;
-  transition: all 0.2s ease;
-  background: var(--bg-primary);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: var(--primary-color);
+  border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-.search-button {
-  position: absolute;
-  right: var(--spacing-md);
-  background: var(--primary-color);
+.search-btn {
+  padding: 0.75rem 1rem;
+  background: #2563eb;
   color: white;
   border: none;
-  border-radius: var(--radius-md);
-  padding: var(--spacing-sm);
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+}
+
+/* === FILTROS AVANZADOS === */
+.advanced-filters {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.filter-group {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.search-button:hover {
-  background: var(--primary-hover);
-  transform: scale(1.05);
+.filter-group label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
 }
 
-.search-icon {
-  width: 20px;
-  height: 20px;
-}
-
-.field-help {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
-/* 🔹 Filtros Rápidos */
-.quick-filters {
+.filter-tabs {
   display: flex;
-  gap: var(--spacing-md);
+  gap: 0.25rem;
   flex-wrap: wrap;
 }
 
-.quick-filter-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--bg-secondary);
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-lg);
+.filter-tab {
+  padding: 0.4rem 0.75rem;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
-  color: var(--text-primary);
+  font-size: 0.8rem;
+  transition: all 0.2s;
 }
 
-.quick-filter-btn:hover {
-  background: var(--bg-accent);
-  border-color: var(--border-hover);
-  transform: translateY(-2px);
+.filter-tab:hover {
+  background: #e5e7eb;
 }
 
-.quick-filter-btn.active {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
+.filter-tab.active {
+  background: #2563eb;
   color: white;
+  border-color: #2563eb;
 }
 
-.filter-icon {
-  font-size: 1.125rem;
-}
-
-.filter-count {
-  font-size: 0.875rem;
-  opacity: 0.8;
-}
-
-/* 🔹 Indicador de Búsqueda */
-.search-indicator {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  border-radius: var(--radius-lg);
-  border: 1px solid #93c5fd;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-}
-
-.indicator-text {
-  color: var(--primary-hover);
-  font-weight: 500;
-}
-
-.results-count {
-  background: var(--primary-color);
-  color: white;
-  padding: var(--spacing-xs) var(--spacing-md);
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-/* ========================================
-   📋 PANEL DE RESULTADOS
-   ======================================== */
-.results-panel {
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-color);
-  margin-bottom: var(--spacing-xl);
-  overflow: hidden;
-}
-
-.panel-actions {
-  display: flex;
-  gap: var(--spacing-lg);
-  align-items: center;
-  flex-wrap: wrap;
+.filter-select {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
 
 .sort-controls {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  font-size: 0.875rem;
+  gap: 0.5rem;
+  font-size: 0.85rem;
 }
 
 .sort-select {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  background: var(--bg-primary);
+  padding: 0.4rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
 }
 
-.sort-direction-btn {
-  padding: var(--spacing-sm);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+.sort-direction {
+  padding: 0.4rem;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s ease;
 }
 
-.sort-direction-btn:hover {
-  background: var(--bg-accent);
+.search-results {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-top: 1rem;
 }
 
-/* 🔹 Contenido del Panel */
-.panel-content {
-  padding: var(--spacing-xl);
+.clear-search {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  cursor: pointer;
 }
 
-/* 🔹 Estados de Carga y Vacío */
-.loading-state, .empty-state {
+/* === CONTROLES DE VISTA === */
+.view-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.view-options {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.view-btn {
+  padding: 0.5rem 1rem;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.view-btn.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.items-per-page {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.items-per-page select {
+  padding: 0.25rem;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+}
+
+/* === ESTADOS DE CARGA === */
+.loading-state {
   text-align: center;
-  padding: var(--spacing-2xl);
-  color: var(--text-secondary);
+  padding: 3rem;
+  color: #6b7280;
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid var(--bg-accent);
-  border-top: 4px solid var(--primary-color);
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #2563eb;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto var(--spacing-lg) auto;
+  margin: 0 auto 1rem;
 }
 
 @keyframes spin {
@@ -1453,415 +1408,386 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+}
+
 .empty-icon {
-  font-size: 4rem;
-  margin-bottom: var(--spacing-lg);
+  font-size: 3rem;
+  margin-bottom: 1rem;
   opacity: 0.5;
 }
 
-.empty-state h3 {
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-md);
-}
-
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-xl);
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: var(--radius-lg);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  margin-top: var(--spacing-lg);
-}
-
-.btn-primary:hover {
-  background: var(--primary-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-/* ========================================
-   🏢 TARJETAS DETALLADAS DE CLIENTES
-   ======================================== */
-.clients-detailed-list {
+.empty-actions {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
 }
 
-.client-detailed-card {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  transition: all 0.3s ease;
-  overflow: hidden;
+/* === VISTA DE TARJETAS === */
+.clients-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 1.5rem;
 }
 
-.client-detailed-card:hover {
-  box-shadow: var(--shadow-xl);
+.client-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.2s;
+  border-left: 4px solid #2563eb;
+}
+
+.client-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   transform: translateY(-2px);
 }
 
-/* 🔹 Header de la Tarjeta */
-.client-card-header {
+.card-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-lg);
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-  border-bottom: 1px solid var(--border-color);
-  flex-wrap: wrap;
-  gap: var(--spacing-lg);
-}
-
-.client-main-info {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-lg);
-  flex: 1;
-  min-width: 300px;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .client-avatar {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  background: #2563eb;
+  color: white;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: bold;
+  font-size: 0.8rem;
   flex-shrink: 0;
-  box-shadow: var(--shadow-md);
-}
-
-.avatar-text {
-  color: white;
-  font-weight: 700;
-  font-size: 1.25rem;
 }
 
 .client-basic-info {
   flex: 1;
 }
 
-.client-company-name {
-  font-size: 1.375rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 var(--spacing-sm) 0;
-  line-height: 1.2;
+.client-basic-info h3 {
+  margin: 0 0 0.25rem 0;
+  color: #1e40af;
+  font-size: 1.1rem;
+  line-height: 1.3;
 }
 
-.client-representative, .client-nit {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  color: var(--text-secondary);
-  margin: var(--spacing-xs) 0;
-  font-size: 0.95rem;
+.client-rep, .client-nit {
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+  color: #6b7280;
 }
 
-.rep-icon, .nit-icon {
-  font-size: 1rem;
-}
-
-/* 🔹 Estado y Acciones */
-.client-status-actions {
+.card-actions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: var(--spacing-md);
+  gap: 0.5rem;
 }
 
-.client-status-badge {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-lg);
-  font-weight: 600;
-  font-size: 0.875rem;
-  box-shadow: var(--shadow-sm);
-}
-
-.status-activo { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-.status-inactivo { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-.status-pendiente { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
-.status-bloqueado { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-
-.client-actions-menu {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
   font-weight: 500;
+}
+
+.status-activo { background: #dcfce7; color: #166534; }
+.status-inactivo { background: #fef3c7; color: #92400e; }
+.status-pendiente { background: #dbeafe; color: #1e40af; }
+.status-bloqueado { background: #fee2e2; color: #991b1b; }
+
+.expand-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
+  font-size: 0.8rem;
 }
 
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-}
-
-.action-btn.secondary {
-  background: var(--secondary-color);
-  color: white;
-}
-
-.action-btn.secondary:hover {
-  background: #475569;
-  transform: translateY(-1px);
-}
-
-.action-btn.danger {
-  background: var(--error-color);
-  color: white;
-}
-
-.action-btn.danger:hover {
-  background: #b91c1c;
-  transform: translateY(-1px);
-}
-
-.action-icon {
-  font-size: 1rem;
-}
-
-/* 🔹 Información de Contacto */
-.client-contact-info {
-  display: flex;
-  gap: var(--spacing-xl);
-  padding: var(--spacing-lg);
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-  flex-wrap: wrap;
+.card-contact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f3f4f6;
 }
 
 .contact-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-.contact-icon {
-  font-size: 1.125rem;
+  font-size: 0.85rem;
 }
 
 .contact-label {
-  font-weight: 500;
-  color: var(--text-primary);
+  color: #6b7280;
+  display: block;
+  margin-bottom: 0.25rem;
 }
 
 .contact-value {
-  color: var(--primary-color);
+  color: #2563eb;
   text-decoration: none;
-  font-weight: 500;
 }
 
 .contact-value:hover {
   text-decoration: underline;
 }
 
-/* 🔹 Detalles Expandibles */
-.client-expanded-details {
-  padding: var(--spacing-lg);
-  background: var(--bg-primary);
-  border-top: 2px solid var(--primary-color);
-  animation: expandDetails 0.3s ease-out;
+/* === DETALLES EXPANDIBLES === */
+.card-details {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 1rem;
+  margin-top: 1rem;
 }
 
-@keyframes expandDetails {
-  from {
-    opacity: 0;
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-  to {
-    opacity: 1;
-    max-height: 1000px;
-    padding-top: var(--spacing-lg);
-    padding-bottom: var(--spacing-lg);
-  }
-}
-
-.details-section {
-  margin-bottom: var(--spacing-xl);
-}
-
-.details-section:last-child {
-  margin-bottom: 0;
-}
-
-.details-title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 var(--spacing-md) 0;
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.details-icon {
-  font-size: 1.25rem;
-}
-
-.details-content {
+.details-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-md);
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
+  font-size: 0.85rem;
 }
 
-.detail-label {
-  font-weight: 500;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+.detail-item strong {
+  color: #374151;
+  display: block;
+  margin-bottom: 0.25rem;
 }
 
-.detail-value {
-  color: var(--text-primary);
-  font-weight: 500;
+.detail-item p {
+  margin: 0;
+  color: #6b7280;
 }
 
-.detail-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-  font-weight: 500;
-  width: fit-content;
-}
-
-.badge-activo { background: #dcfce7; color: #166534; }
-.badge-inactivo { background: #fef3c7; color: #92400e; }
-.badge-pendiente { background: #dbeafe; color: #1e40af; }
-.badge-bloqueado { background: #fee2e2; color: #991b1b; }
-
-/* 🔹 Acciones Expandidas */
 .expanded-actions {
-  display: flex;
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-lg);
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--border-color);
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
 }
 
-.expanded-action-btn {
+.action-btn {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.action-btn.primary { background: #2563eb; color: white; }
+.action-btn.success { background: #059669; color: white; }
+.action-btn.info { background: #0891b2; color: white; }
+.action-btn.warning { background: #d97706; color: white; }
+.action-btn.danger { background: #dc2626; color: white; }
+
+.card-quick-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.quick-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-lg);
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  text-decoration: none;
-  font-weight: 500;
+  justify-content: center;
+}
+
+.quick-btn.edit { background: #f3f4f6; }
+.quick-btn.delete { background: #fee2e2; color: #991b1b; }
+.quick-btn.quotation { background: #dcfce7; color: #166534; }
+
+/* === VISTA DE TABLA === */
+.clients-table {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.clients-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.clients-table th {
+  background: #f9fafb;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: 0.85rem;
 }
 
-.expanded-action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.clients-table th:hover {
+  background: #f3f4f6;
 }
 
-.expanded-action-btn.create-quotation:hover {
-  border-color: var(--success-color);
-  background: #f0fdf4;
-  color: var(--success-color);
+.clients-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.85rem;
 }
 
-.expanded-action-btn.view-history:hover {
-  border-color: var(--info-color);
-  background: #f0f9ff;
-  color: var(--info-color);
+.clients-table tr:hover {
+  background: #f9fafb;
 }
 
-.expanded-action-btn.send-email:hover {
-  border-color: var(--primary-color);
-  background: #eff6ff;
-  color: var(--primary-color);
+.table-actions {
+  display: flex;
+  gap: 0.25rem;
 }
 
-/* ========================================
-   📄 PAGINACIÓN
-   ======================================== */
+.table-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-btn.edit { background: #f3f4f6; }
+.table-btn.delete { background: #fee2e2; color: #991b1b; }
+.table-btn.quotation { background: #dcfce7; color: #166534; }
+
+/* === VISTA COMPACTA === */
+.clients-compact {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.compact-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.compact-item:hover {
+  background: #f9fafb;
+}
+
+.compact-item:last-child {
+  border-bottom: none;
+}
+
+.compact-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.status-activo { background: #22c55e; }
+.status-dot.status-inactivo { background: #f59e0b; }
+.status-dot.status-pendiente { background: #3b82f6; }
+.status-dot.status-bloqueado { background: #ef4444; }
+
+.compact-info {
+  flex: 1;
+}
+
+.compact-info strong {
+  display: block;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.compact-details {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.compact-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.compact-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compact-btn.delete {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* === PAGINACIÓN === */
 .pagination-panel {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--bg-primary);
-  padding: var(--spacing-lg) var(--spacing-xl);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-color);
-  flex-wrap: wrap;
-  gap: var(--spacing-lg);
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
 }
 
 .pagination-info {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: 0.85rem;
+  color: #6b7280;
 }
 
 .pagination-controls {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 0.5rem;
 }
 
 .page-btn {
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
 }
 
 .page-btn:hover:not(:disabled) {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
+  background: #e5e7eb;
 }
 
 .page-btn:disabled {
@@ -1869,83 +1795,97 @@ export default {
   cursor: not-allowed;
 }
 
-.page-current {
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-weight: 600;
-  color: var(--text-primary);
+.page-numbers {
+  display: flex;
+  gap: 0.25rem;
 }
 
-.items-per-page {
+.page-number {
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+  justify-content: center;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
 }
 
-.items-select {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--bg-primary);
+.page-number.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
 }
 
-/* ========================================
-   🔧 MODALES
-   ======================================== */
+/* === BOTONES GENERALES === */
+.btn-primary, .btn-secondary, .btn-danger, .btn-cancel, .btn-clear, .btn-export {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
 
-/* 🔹 Modal de Edición */
-.edit-modal-overlay {
+.btn-primary { background: #2563eb; color: white; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-secondary { background: #6b7280; color: white; }
+.btn-secondary:hover { background: #4b5563; }
+
+.btn-danger { background: #dc2626; color: white; }
+.btn-danger:hover { background: #b91c1c; }
+
+.btn-cancel { background: #f3f4f6; color: #374151; }
+.btn-cancel:hover { background: #e5e7eb; }
+
+.btn-clear { background: #f59e0b; color: white; }
+.btn-clear:hover { background: #d97706; }
+
+.btn-export { background: #059669; color: white; }
+.btn-export:hover { background: #047857; }
+
+/* === MODALES === */
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: var(--spacing-lg);
+  padding: 1rem;
 }
 
-.edit-modal-content {
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  width: 100%;
-  max-width: 800px;
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  animation: modalSlideIn 0.3s ease-out;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
 }
 
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-50px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.edit-modal-header {
+.modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-lg) var(--spacing-xl);
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border-bottom: 1px solid var(--border-color);
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.edit-modal-header h3 {
+.modal-header h3 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  color: #1e40af;
+  font-size: 1.2rem;
 }
 
 .modal-close {
@@ -1953,355 +1893,236 @@ export default {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: var(--text-secondary);
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-md);
-  transition: all 0.2s ease;
+  color: #6b7280;
+  padding: 0.25rem;
+  border-radius: 4px;
 }
 
 .modal-close:hover {
-  background: var(--bg-accent);
-  color: var(--text-primary);
+  background: #f3f4f6;
 }
 
-.edit-modal-body {
-  padding: var(--spacing-xl);
+.edit-form {
+  padding: 1.5rem;
 }
 
-/* 🔹 Formulario de Edición */
-.edit-client-form {
+.form-sections {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xl);
-}
-
-.form-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: 1.5rem;
 }
 
 .form-section h4 {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--border-color);
+  margin: 0 0 1rem 0;
+  color: #374151;
+  font-size: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.5rem;
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-lg);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
 }
 
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: 0.5rem;
 }
 
-.form-field-full {
+.form-field.full-width {
   grid-column: 1 / -1;
 }
 
 .form-field label {
+  font-size: 0.85rem;
   font-weight: 500;
-  color: var(--text-primary);
-  font-size: 0.875rem;
+  color: #374151;
 }
 
-.form-input, .form-select, .form-textarea {
-  padding: var(--spacing-md);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  transition: all 0.2s ease;
-  background: var(--bg-primary);
+.form-field input,
+.form-field select,
+.form-field textarea {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
 
-.form-input:focus, .form-select:focus, .form-textarea:focus {
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
   outline: none;
-  border-color: var(--primary-color);
+  border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-/* 🔹 Acciones del Modal */
-.edit-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg) var(--spacing-xl);
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-color);
-}
-
-.btn-cancel, .btn-save {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-xl);
-  border: none;
-  border-radius: var(--radius-lg);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 1rem;
-}
-
-.btn-cancel {
-  background: var(--bg-accent);
-  color: var(--text-secondary);
-}
-
-.btn-cancel:hover {
-  background: #cbd5e1;
-}
-
-.btn-save {
-  background: var(--primary-color);
-  color: white;
-}
-
-.btn-save:hover:not(:disabled) {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-}
-
-.btn-save:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* 🔹 Modal de Confirmación */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: var(--spacing-lg);
-}
-
-.modal-content {
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  width: 100%;
-  max-width: 500px;
-  animation: modalSlideIn 0.3s ease-out;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-lg) var(--spacing-xl);
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  border-bottom: 1px solid #fca5a5;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--error-color);
-}
-
-.modal-body {
-  padding: var(--spacing-xl);
-  text-align: center;
-}
-
-.client-to-delete-info {
-  background: var(--bg-secondary);
-  padding: var(--spacing-lg);
-  border-radius: var(--radius-md);
-  margin: var(--spacing-lg) 0;
-  border-left: 4px solid var(--error-color);
-}
-
-.warning-text {
-  color: var(--error-color);
-  font-weight: 500;
-  margin-top: var(--spacing-lg);
 }
 
 .modal-actions {
   display: flex;
+  gap: 1rem;
   justify-content: flex-end;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg) var(--spacing-xl);
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-color);
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
 }
 
-.btn-confirm-delete {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-xl);
-  background: var(--error-color);
-  color: white;
-  border: none;
-  border-radius: var(--radius-lg);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* === MODAL DE CONFIRMACIÓN === */
+.confirm-modal {
+  max-width: 400px;
 }
 
-.btn-confirm-delete:hover {
-  background: #b91c1c;
-  transform: translateY(-1px);
+.confirm-content {
+  padding: 1.5rem;
+  text-align: center;
 }
 
-/* ========================================
-   📱 RESPONSIVE DESIGN
-   ======================================== */
-@media (max-width: 768px) {
-  .client-read-workspace {
-    padding: var(--spacing-md);
+.warning-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.client-preview {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 4px;
+  margin: 1rem 0;
+  border-left: 4px solid #dc2626;
+}
+
+.client-preview h4 {
+  margin: 0 0 0.5rem 0;
+  color: #374151;
+}
+
+.client-preview p {
+  margin: 0.25rem 0;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.warning-text {
+  color: #dc2626;
+  font-size: 0.85rem;
+}
+
+.warning-text strong {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 1024px) {
+  .filter-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
-  
-  .header-content {
-    flex-direction: column;
-    text-align: center;
+
+  .clients-cards {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   }
-  
-  .main-title {
-    font-size: 2rem;
-  }
-  
-  .client-card-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .client-main-info {
-    min-width: auto;
-  }
-  
-  .client-status-actions {
-    align-items: stretch;
-  }
-  
-  .client-actions-menu {
-    justify-content: center;
-  }
-  
-  .contact-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-xs);
-  }
-  
-  .details-content {
+
+  .details-grid {
     grid-template-columns: 1fr;
   }
-  
+
+  .expanded-actions {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .client-read-container {
+    padding: 0.5rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    align-items: stretch;
+  }
+
+  .stats-summary {
+    justify-content: space-between;
+  }
+
+  .search-bar {
+    flex-direction: column;
+  }
+
+  .view-controls {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .clients-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .card-contact {
+    grid-template-columns: 1fr;
+  }
+
+  .clients-table {
+    overflow-x: auto;
+  }
+
   .pagination-panel {
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: 1rem;
   }
-  
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
   .form-grid {
     grid-template-columns: 1fr;
   }
-  
-  .edit-modal-overlay {
-    padding: var(--spacing-sm);
+
+  .modal-content {
+    width: 95%;
+    margin: 0.5rem;
   }
 }
 
 @media (max-width: 480px) {
-  .main-title {
-    font-size: 1.75rem;
-  }
-  
-  .quick-filters {
-    justify-content: center;
-  }
-  
-  .quick-filter-btn {
-    flex: 1;
-    min-width: 120px;
-    justify-content: center;
-  }
-  
-  .expanded-actions {
+  .filter-tabs {
     flex-direction: column;
   }
-  
-  .action-btn {
-    justify-content: center;
+
+  .filter-tab {
+    text-align: center;
   }
-}
 
-/* ========================================
-   🎯 UTILIDADES Y MEJORAS
-   ======================================== */
-
-/* 🔹 Estados de enfoque mejorados */
-.search-input:focus,
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus {
-  transform: translateY(-1px);
-}
-
-/* 🔹 Animaciones suaves */
-.client-detailed-card,
-.quick-filter-btn,
-.action-btn,
-.page-btn {
-  will-change: transform;
-}
-
-/* 🔹 Scrollbar personalizado */
-.edit-modal-content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.edit-modal-content::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
-}
-
-.edit-modal-content::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 4px;
-}
-
-.edit-modal-content::-webkit-scrollbar-thumb:hover {
-  background: var(--border-hover);
-}
-
-/* 🔹 Estados de impresión */
-@media print {
-  .client-read-workspace {
-    background: white;
-    box-shadow: none;
+  .card-header {
+    flex-direction: column;
+    gap: 0.5rem;
   }
-  
-  .search-panel,
-  .pagination-panel,
-  .client-actions-menu,
-  .expanded-actions {
+
+  .card-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .page-numbers {
     display: none;
+  }
+
+  .compact-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .compact-actions {
+    justify-content: center;
   }
 }
 </style>

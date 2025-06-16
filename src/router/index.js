@@ -74,7 +74,7 @@ const router = createRouter({
           },
         },
         {
-          path: 'clientes/nuevo', // URL completa: /dashboard/clientes/nuevo
+          path: 'clients/create', // URL completa: /dashboard/clientes/nuevo
           name: 'client-create',
           // Carga lazy del formulario de creación de clientes
           component: () => import('../views/clients/ClientCreateView.vue'),
@@ -84,7 +84,7 @@ const router = createRouter({
             description: 'Crear nuevo cliente',
           },
         },
-        
+
         // === SECCIÓN PRODUCTOS ===
         {
           path: 'products/manage-stock', // URL completa: /dashboard/products/manage-stock
@@ -133,7 +133,7 @@ const router = createRouter({
 
         // === SECCIÓN COTIZACIONES/VENTAS ===
         {
-          path: 'cotizacion/nueva', // URL completa: /dashboard/cotizacion/nueva
+          path: 'quotation/create', // URL completa: /dashboard/cotizacion/nueva
           name: 'quotation-create',
           // Carga lazy del formulario de creación/edición de cotizaciones
           component: () => import('../views/quotations/QuotationCreateView.vue'),
@@ -144,7 +144,7 @@ const router = createRouter({
           },
         },
         {
-          path: 'cotizacion/historial', // URL completa: /dashboard/cotizacion/historial
+          path: 'quotation/history',
           name: 'quotation-history', // Nombre para referenciar esta ruta programáticamente
           // Carga lazy del historial de cotizaciones
           component: () => import('../views/quotations/QuotationHistoryView.vue'),
@@ -246,7 +246,7 @@ router.afterEach((to) => {
       'user-profile': 'Mi Perfil',
       'client-read': 'Directorio de Clientes', // ✅ NUEVO
       'client-create': 'Crear Cliente',
-      
+
       'stock-management': 'Gestión de Stock',
       'csv-upload': 'Cargar CSV',
       'product-read': 'Productos',

@@ -131,28 +131,20 @@ const getIcon = (key) => {
 // ✅ CORRECCIÓN: Botones barra de dashboard con rutas corregidas
 const options = {
   clientes: [
-    { text: 'Nuevo', path: '/dashboard/clientes/nuevo' },
-    { text: 'Actualizar', path: '/clientes/actualizar' },
-    { text: 'Borrar', path: '/clientes/borrar' },
-    { text: 'Leer', path: '/clientes/leer' },
+    { text: 'Nuevo Cliente', path: '/dashboard/clients/create' }, // ← CORREGIDO
+    { text: 'Consultar Clientes', path: '/dashboard/clients/read' }, // ← CORREGIDO
   ],
   productos: [
     { text: 'Gestionar Stock', path: '/dashboard/products/manage-stock' },
     { text: 'Cargar CSV', path: '/dashboard/products/upload' },
-    { text: 'Eliminar', path: '/productos/eliminar' },
-    { text: 'Consultar', path: '/dashboard/products/read' },
+    { text: 'Consultar Productos', path: '/dashboard/products/read' }, // ← QUITAR TYPO
   ],
-  // ✅ AQUÍ ESTÁ LA CORRECCIÓN PRINCIPAL:
   cotizacion: [
-    { text: 'Nueva', path: '/dashboard/cotizacion/nueva' },
-    { text: 'Historial', path: '/dashboard/cotizacion/historial' }, // ← CORREGIDO: Agregado /dashboard/
+    { text: 'Nueva Cotización', path: '/dashboard/quotation/create' }, // ← SINGULAR
+    { text: 'Historial', path: '/dashboard/quotation/history' }, // ← SINGULAR
   ],
-  stackflow: [
-    { text: 'Sistema', path: '/stackflow/info' }
-  ],
-  cuenta: [
-    { text: 'Mi Perfil', path: '/dashboard/user' },
-  ],
+  stackflow: [{ text: 'Información del Sistema', path: '/dashboard/system/info' }],
+  cuenta: [{ text: 'Mi Perfil', path: '/dashboard/user' }],
 }
 
 function showMenu(menu) {
@@ -170,7 +162,7 @@ function hideMenu(menu) {
 // ✅ FUNCIÓN NAVIGATE MEJORADA CON DEBUG:
 function navigate(path) {
   console.log('🚀 DashboardView: Navegando a:', path)
-  
+
   // Cerrar todos los menús antes de navegar
   Object.keys(menus.value).forEach((key) => {
     menus.value[key] = false
@@ -180,21 +172,25 @@ function navigate(path) {
   isLoading.value = true
 
   // ✅ VALIDAR QUE LA RUTA EXISTE ANTES DE NAVEGAR:
-  const routeExists = router.getRoutes().some(route => {
+  const routeExists = router.getRoutes().some((route) => {
     // Verificar si existe una ruta que coincida con el path
     return route.path === path || route.path.replace(':id?', '') === path
   })
 
   if (!routeExists) {
     console.error('❌ Ruta no encontrada en el router:', path)
-    console.log('📋 Rutas disponibles:', router.getRoutes().map(r => ({ name: r.name, path: r.path })))
+    console.log(
+      '📋 Rutas disponibles:',
+      router.getRoutes().map((r) => ({ name: r.name, path: r.path })),
+    )
     isLoading.value = false
     alert(`Error: La ruta "${path}" no está configurada en el sistema.`)
     return
   }
 
   // Navegar a la ruta solicitada
-  router.push(path)
+  router
+    .push(path)
     .then(() => {
       console.log('✅ Navegación exitosa a:', path)
     })
@@ -213,13 +209,13 @@ function navigate(path) {
 function logout() {
   try {
     console.log('🚪 Cerrando sesión...')
-    
+
     // Limpiar datos de sesión
     localStorage.removeItem('access_token')
     localStorage.removeItem('user')
 
     console.log('✅ Sesión cerrada correctamente')
-    
+
     // Redireccionar al login
     router.push('/login')
   } catch (error) {
@@ -229,7 +225,7 @@ function logout() {
 
 onMounted(() => {
   console.log('📍 DashboardView montado')
-  
+
   // Verificar el token
   const token = localStorage.getItem('access_token')
   if (!token) {
@@ -256,7 +252,7 @@ onMounted(() => {
 
   // ✅ DEBUG: Mostrar rutas disponibles
   console.log('📋 Rutas disponibles en el router:')
-  router.getRoutes().forEach(route => {
+  router.getRoutes().forEach((route) => {
     console.log(`  - ${route.name}: ${route.path}`)
   })
 
@@ -588,9 +584,9 @@ body {
 
 /* Área de trabajo */
 .workspace-area {
-  position: relative; 
-  z-index: 1; 
-  overflow: visible; 
+  position: relative;
+  z-index: 1;
+  overflow: visible;
   width: 100%;
   max-width: 1400px;
   margin: 1.5rem auto;
