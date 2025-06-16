@@ -1,7 +1,7 @@
 <!-- filepath: src/views/quotations/QuotationCreateView.vue -->
 <template>
   <div class="quotation-workspace">
-    <!-- Header Moderno con Gradiente -->
+    <!-- Header conservado igual -->
     <div class="quotation-header">
       <div class="header-content">
         <div class="title-section">
@@ -36,7 +36,7 @@
 
     <!-- Contenido Principal -->
     <div class="quotation-body">
-      <!-- Panel de Información del Cliente -->
+      <!-- Panel de Información del Cliente - SIN CAMBIOS -->
       <div class="info-panel client-panel">
         <div class="panel-header">
           <h3><span class="icon-user">👤</span>Información del Cliente</h3>
@@ -101,32 +101,52 @@
         </div>
       </div>
 
-      <!-- Panel de Productos -->
+      <!-- Panel de Productos CORREGIDO -->
       <div class="info-panel products-panel">
         <div class="panel-header">
           <h3><span class="icon-package">📦</span>Productos y Servicios</h3>
           <div class="panel-actions">
-            <button class="btn-icon" @click="addProduct" title="Agregar producto">
+            <button class="btn-icon" @click="addProduct" title="Agregar producto individual">
               <span class="icon-plus">➕</span>
             </button>
-            <label for="csvFile" class="btn-icon csv-btn" title="Importar CSV">
+            <label for="csvFile" class="btn-icon csv-btn" title="Carga masiva CSV">
               <span class="icon-upload">📤</span>
               <input type="file" id="csvFile" accept=".csv" @change="handleFileUpload" style="display: none;" />
             </label>
+            <button v-if="products.length > 1" class="btn-icon clear-btn" @click="clearProducts" title="Limpiar todos">
+              <span class="icon-clear">🗑️</span>
+            </button>
           </div>
         </div>
         <div class="panel-content">
+          <!-- Indicador de carga CSV -->
+          <div v-if="csvLoading" class="csv-loading">
+            <span class="loading-icon">⏳</span>
+            <span>Procesando archivo CSV...</span>
+          </div>
+          
+          <!-- Resultado de carga CSV -->
+          <div v-if="csvResults.length > 0" class="csv-results">
+            <div class="results-summary">
+              <span class="success-count">✅ {{ csvResults.filter(r => r.success).length }} productos cargados</span>
+              <span v-if="csvResults.filter(r => !r.success).length > 0" class="error-count">
+                ❌ {{ csvResults.filter(r => !r.success).length }} errores
+              </span>
+            </div>
+          </div>
+
+          <!-- Tabla de productos COMPACTA -->
           <div class="products-table-wrapper">
-            <table class="products-table">
+            <table class="products-table compact">
               <thead>
                 <tr>
                   <th class="product-column">Producto/Servicio</th>
                   <th class="description-column">Descripción</th>
                   <th class="quantity-column">Cant.</th>
-                  <th class="price-column">Precio Unit.</th>
-                  <th class="discount-column">Desc. %</th>
+                  <th class="price-column">Precio</th>
+                  <th class="discount-column">Desc.%</th>
                   <th class="total-column">Total</th>
-                  <th class="actions-column">Acciones</th>
+                  <th class="actions-column">Act.</th>
                 </tr>
               </thead>
               <tbody>
@@ -136,7 +156,7 @@
                       type="text"
                       v-model="product.query"
                       placeholder="Nombre del producto..."
-                      class="product-input"
+                      class="product-input compact"
                       @input="fetchProductSuggestions(index)"
                     />
                     <div v-if="product.suggestions && product.suggestions.length" class="suggestions-dropdown">
@@ -154,8 +174,9 @@
                   <td class="description-cell">
                     <textarea
                       v-model="product.description"
-                      placeholder="Descripción detallada..."
-                      rows="2"
+                      placeholder="Descripción..."
+                      rows="1"
+                      class="description-input compact"
                     ></textarea>
                   </td>
                   <td class="quantity-cell">
@@ -164,11 +185,11 @@
                       v-model.number="product.quantity"
                       min="1"
                       @input="updateTotal(index)"
-                      class="number-input"
+                      class="number-input compact"
                     />
                   </td>
                   <td class="price-cell">
-                    <div class="currency-input">
+                    <div class="currency-input compact">
                       <span class="currency-symbol">$</span>
                       <input
                         type="number"
@@ -176,25 +197,23 @@
                         min="0"
                         step="0.01"
                         @input="updateTotal(index)"
-                        class="number-input"
+                        class="number-input compact"
                       />
                     </div>
                   </td>
                   <td class="discount-cell">
-                    <div class="percentage-input">
-                      <input
-                        type="number"
-                        v-model.number="product.discount"
-                        min="0"
-                        max="100"
-                        @input="updateTotal(index)"
-                        class="number-input"
-                      />
-                      <span class="percentage-symbol">%</span>
-                    </div>
+                    <input
+                      type="number"
+                      v-model.number="product.discount"
+                      min="0"
+                      max="100"
+                      @input="updateTotal(index)"
+                      class="number-input compact"
+                      placeholder="0"
+                    />
                   </td>
                   <td class="total-cell">
-                    <div class="total-display">
+                    <div class="total-display compact">
                       ${{ formatNumber(product.total) }}
                     </div>
                   </td>
@@ -202,10 +221,10 @@
                     <button
                       v-if="products.length > 1"
                       @click="removeProduct(index)"
-                      class="btn-remove"
-                      title="Eliminar producto"
+                      class="btn-remove compact"
+                      title="Eliminar"
                     >
-                      <span class="icon-trash">🗑️</span>
+                      ✕
                     </button>
                   </td>
                 </tr>
@@ -215,7 +234,7 @@
         </div>
       </div>
 
-      <!-- Panel de Condiciones Comerciales -->
+      <!-- Panel de Condiciones Comerciales - SIN CAMBIOS -->
       <div class="info-panel conditions-panel">
         <div class="panel-header">
           <h3><span class="icon-document-text">📝</span>Condiciones Comerciales</h3>
@@ -232,6 +251,9 @@
       </div>
     </div>
 
+    <!-- Resto del template SIN CAMBIOS... -->
+    <!-- Panel de Totales, Acciones y Modal conservados igual -->
+    
     <!-- Panel de Totales Flotante -->
     <div class="totals-panel">
       <div class="totals-header">
@@ -258,7 +280,7 @@
       </div>
     </div>
 
-    <!-- Panel de Acciones Mejorado -->
+    <!-- Panel de Acciones -->
     <div class="actions-panel">
       <div class="actions-left">
         <button class="btn secondary" @click="cancelQuotation">
@@ -292,7 +314,7 @@
       </div>
     </div>
 
-    <!-- Modal de Vista Previa -->
+    <!-- Modal conservado igual... -->
     <div v-if="showPreview" class="modal-overlay" @click="closePreview">
       <div class="modal-content preview-modal" @click.stop>
         <div class="modal-header">
@@ -358,6 +380,8 @@ export default {
       filteredClients: [],
       isSaving: false,
       showPreview: false,
+      csvLoading: false,
+      csvResults: [],
       quotation: {
         client: null,
         date: new Date().toISOString().split('T')[0],
@@ -402,7 +426,107 @@ export default {
     },
   },
   methods: {
-    // Métodos de clientes
+    // FUNCIONALIDAD CSV RESTAURADA
+    handleFileUpload(event) {
+      const file = event.target.files[0]
+      if (file && file.type === 'text/csv') {
+        this.csvLoading = true
+        this.csvResults = []
+        
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          this.parseCSV(e.target.result)
+          this.csvLoading = false
+        }
+        reader.readAsText(file)
+      } else {
+        alert('Por favor selecciona un archivo CSV válido')
+      }
+    },
+
+    parseCSV(csvData) {
+      console.log('📄 Procesando archivo CSV...')
+      const lines = csvData.split('\n').filter(line => line.trim())
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''))
+      
+      const newProducts = []
+      const results = []
+      
+      for (let i = 1; i < lines.length; i++) {
+        try {
+          const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''))
+          const product = {}
+          
+          headers.forEach((header, index) => {
+            product[header] = values[index] || ''
+          })
+          
+          // Mapear campos del CSV a estructura interna
+          const mappedProduct = {
+            query: product.name || product.producto || product.item || '',
+            description: product.description || product.descripcion || '',
+            quantity: parseInt(product.quantity || product.cantidad || product.cant || 1),
+            unitPrice: parseFloat(product.unit_price || product.precio || product.price || 0),
+            discount: parseFloat(product.discount || product.descuento || 0),
+            taxCharge: parseFloat(product.tax || product.impuesto || 0),
+            taxRetention: 0,
+            total: 0,
+            suggestions: []
+          }
+          
+          // Validar producto
+          if (mappedProduct.query && mappedProduct.unitPrice > 0) {
+            newProducts.push(mappedProduct)
+            results.push({ success: true, row: i + 1, product: mappedProduct.query })
+          } else {
+            results.push({ 
+              success: false, 
+              row: i + 1, 
+              error: 'Producto sin nombre o precio inválido' 
+            })
+          }
+          
+        } catch (error) {
+          results.push({ 
+            success: false, 
+            row: i + 1, 
+            error: error.message 
+          })
+        }
+      }
+      
+      if (newProducts.length > 0) {
+        // Reemplazar productos existentes con los del CSV
+        this.products = newProducts
+        this.updateTotals()
+        console.log(`✅ ${newProducts.length} productos cargados desde CSV`)
+      }
+      
+      this.csvResults = results
+      
+      // Limpiar input file
+      document.getElementById('csvFile').value = ''
+    },
+
+    clearProducts() {
+      if (confirm('¿Eliminar todos los productos de la cotización?')) {
+        this.products = [{
+          query: '',
+          suggestions: [],
+          description: '',
+          quantity: 1,
+          unitPrice: 0,
+          discount: 0,
+          taxCharge: 0,
+          taxRetention: 0,
+          total: 0,
+        }]
+        this.csvResults = []
+        this.updateTotals()
+      }
+    },
+
+    // Resto de métodos conservados...
     async fetchClients() {
       if (this.clientQuery.length === 0) {
         this.filteredClients = []
@@ -424,7 +548,6 @@ export default {
       this.filteredClients = []
     },
 
-    // Método principal para obtener número de cotización
     async fetchQuotationNumber() {
       try {
         console.log('📤 Solicitando próximo número de cotización...')
@@ -446,7 +569,6 @@ export default {
       }
     },
 
-    // Métodos de productos
     async fetchProductSuggestions(index) {
       const product = this.products[index]
       if (product.query.length < 2) {
@@ -508,46 +630,6 @@ export default {
       }
     },
 
-    // Manejo de archivos
-    handleFileUpload(event) {
-      const file = event.target.files[0]
-      if (file && file.type === 'text/csv') {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          this.parseCSV(e.target.result)
-        }
-        reader.readAsText(file)
-      }
-    },
-
-    parseCSV(csvData) {
-      const lines = csvData.split('\n')
-      const newProducts = []
-      
-      for (let i = 1; i < lines.length; i++) {
-        const columns = lines[i].split(',')
-        if (columns.length >= 4) {
-          newProducts.push({
-            query: columns[0].trim(),
-            description: columns[1].trim(),
-            quantity: parseInt(columns[2]) || 1,
-            unitPrice: parseFloat(columns[3]) || 0,
-            discount: 0,
-            taxCharge: 0,
-            taxRetention: 0,
-            total: 0,
-            suggestions: []
-          })
-        }
-      }
-      
-      if (newProducts.length > 0) {
-        this.products = newProducts
-        this.updateTotals()
-      }
-    },
-
-    // Utilidades
     formatNumber(number) {
       return new Intl.NumberFormat('es-CO', {
         minimumFractionDigits: 2,
@@ -555,14 +637,12 @@ export default {
       }).format(number || 0)
     },
 
-    // Métodos de guardado y acciones principales
     async saveQuotationAsDraft() {
       this.isSaving = true
       try {
         const quotationData = this.prepareQuotationData('borrador')
         await axios.post('/quotations/', quotationData)
         this.showSuccessMessage('Cotización guardada como borrador')
-        // console.log('Respuesta del servidor:', response.data)
       } catch (error) {
         console.error('Error al guardar la cotización:', error)
         this.showErrorMessage('Error al guardar la cotización')
@@ -592,7 +672,6 @@ export default {
         const quotationData = this.prepareQuotationData('aprobada')
         const response = await axios.post('/quotations/', quotationData)
         this.showSuccessMessage('Cotización aprobada y convertida a factura')
-        // Redirigir a crear factura (implementar después)
         this.$router.push(`/facturas/nueva?from_quotation=${response.data.id}`)
       } catch (error) {
         console.error('Error al aprobar la cotización:', error)
@@ -622,7 +701,6 @@ export default {
       }
     },
 
-    // Vista previa y PDF
     previewQuotation() {
       this.showPreview = true
     },
@@ -635,7 +713,6 @@ export default {
       const doc = new jsPDF()
       let yPosition = 20
       
-      // Header
       doc.setFontSize(20)
       doc.text('COTIZACIÓN', 20, yPosition)
       yPosition += 10
@@ -646,7 +723,6 @@ export default {
       doc.text(`Fecha: ${this.quotation.date}`, 20, yPosition)
       yPosition += 20
       
-      // Cliente
       doc.setFontSize(14)
       doc.text('CLIENTE:', 20, yPosition)
       yPosition += 10
@@ -654,7 +730,6 @@ export default {
       doc.text(`${this.quotation.client?.name || this.clientQuery}`, 20, yPosition)
       yPosition += 30
       
-      // Productos
       doc.setFontSize(14)
       doc.text('PRODUCTOS:', 20, yPosition)
       yPosition += 15
@@ -669,7 +744,6 @@ export default {
         yPosition += 10
       })
       
-      // Total
       yPosition += 10
       doc.setFontSize(14)
       doc.text(`TOTAL NETO: $${this.formatNumber(this.totalNeto)}`, 20, yPosition)
@@ -677,14 +751,12 @@ export default {
       doc.save(`cotizacion-${this.quotation.number}.pdf`)
     },
 
-    // Navegación
     cancelQuotation() {
       if (confirm('¿Estás seguro de que deseas cancelar la cotización?')) {
         this.$router.push('/cotizaciones')
       }
     },
 
-    // Mensajes de notificación (usando toast si está disponible)
     showSuccessMessage(message) {
       if (this.$toast) {
         this.$toast.success(message)
@@ -719,41 +791,41 @@ export default {
 </script>
 
 <style scoped>
-/* Variables CSS para consistencia */
+/* Variables conservadas del dashboard */
 :root {
-  --primary-color: #2563eb;
-  --primary-dark: #1d4ed8;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --warning-color: #d97706;
-  --danger-color: #dc2626;
-  --background-color: #f8fafc;
-  --surface-color: #ffffff;
+  --primary-color: #003366;
+  --secondary-color: #f1c40f;
+  --success-color: #27ae60;
+  --error-color: #e74c3c;
+  --warning-color: #f39c12;
+  --background-light: #f8f9fa;
   --border-color: #e2e8f0;
-  --text-primary: #1e293b;
+  --text-primary: #2c3e50;
   --text-secondary: #64748b;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
 }
 
-/* Layout Principal */
 .quotation-workspace {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-  padding: 1rem;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+  position: relative;
+  z-index: 100;
 }
 
-/* Header Moderno */
+/* Header con colores del dashboard */
 .quotation-header {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-  border-radius: var(--radius-lg);
-  padding: 2rem;
-  margin-bottom: 2rem;
+  background: var(--primary-color);
   color: white;
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 2rem;
   box-shadow: var(--shadow-lg);
 }
 
@@ -765,22 +837,24 @@ export default {
 }
 
 .title-section .main-title {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 700;
   margin: 0;
   display: flex;
   align-items: center;
   gap: 1rem;
+  color: white;
 }
 
 .title-section .subtitle {
   font-size: 1.1rem;
-  opacity: 0.9;
   margin: 0.5rem 0 0;
+  opacity: 0.9;
+  color: white;
 }
 
 .quotation-badge {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border-radius: var(--radius-md);
   padding: 1rem 1.5rem;
@@ -800,7 +874,6 @@ export default {
   font-weight: 700;
 }
 
-/* Indicador de Progreso */
 .progress-indicator {
   display: flex;
   align-items: center;
@@ -843,29 +916,29 @@ export default {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Cuerpo Principal */
 .quotation-body {
   display: grid;
   gap: 2rem;
   margin-bottom: 8rem;
 }
 
-/* Paneles de Información */
 .info-panel {
-  background: var(--surface-color);
+  background: white;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   overflow: hidden;
   border: 1px solid var(--border-color);
+  position: relative;
+  z-index: 50;
 }
 
 .panel-header {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(145deg, #f8f9fa, #e9ecef);
   padding: 1.5rem 2rem;
   border-bottom: 1px solid var(--border-color);
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
 }
 
 .panel-header h3 {
@@ -878,11 +951,6 @@ export default {
   gap: 0.75rem;
 }
 
-.required-indicator {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
 .panel-actions {
   display: flex;
   gap: 0.5rem;
@@ -892,16 +960,193 @@ export default {
   padding: 2rem;
 }
 
-/* Formulario */
+/* CSV Loading y Results */
+.csv-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #e3f2fd;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  color: #1976d2;
+  font-weight: 500;
+}
+
+.csv-results {
+  margin-bottom: 1rem;
+}
+
+.results-summary {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+}
+
+.success-count {
+  color: var(--success-color);
+}
+
+.error-count {
+  color: var(--error-color);
+}
+
+/* TABLA COMPACTA PARA PEDIDOS GRANDES */
+.products-table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.products-table.compact {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.products-table.compact th {
+  background: linear-gradient(145deg, #f1f3f4, #e8eaed);
+  padding: 0.5rem 0.4rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  font-size: 0.75rem;
+}
+
+.products-table.compact td {
+  padding: 0.4rem;
+  border-bottom: 1px solid #f1f1f1;
+  vertical-align: top;
+  position: relative;
+}
+
+.products-table.compact tr:hover {
+  background: #f8f9fa;
+}
+
+/* Inputs compactos */
+.product-input.compact,
+.description-input.compact,
+.number-input.compact {
+  width: 100%;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.description-input.compact {
+  resize: none;
+  min-height: 2rem;
+}
+
+.currency-input.compact {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.currency-input.compact .currency-symbol {
+  padding: 0.3rem 0.4rem;
+  background-color: #f8f9fa;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.currency-input.compact input {
+  border: none;
+  flex: 1;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.8rem;
+}
+
+.total-display.compact {
+  font-weight: 600;
+  color: var(--primary-color);
+  text-align: right;
+  font-size: 0.8rem;
+}
+
+.btn-remove.compact {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 3px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: var(--error-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.btn-remove.compact:hover {
+  background: var(--error-color);
+  color: white;
+}
+
+/* Sugerencias conservadas */
+.suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 3px 3px;
+  max-height: 150px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: var(--shadow-md);
+}
+
+.suggestion-option {
+  padding: 0.5rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.suggestion-option:hover {
+  background-color: #f8f9fa;
+}
+
+.suggestion-name {
+  font-weight: 500;
+}
+
+.suggestion-price {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Formulario del cliente conservado */
 .form-row {
   display: grid;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
   grid-template-columns: 2fr 1fr;
-}
-
-.form-row:last-child {
-  margin-bottom: 0;
 }
 
 .form-field {
@@ -937,16 +1182,11 @@ export default {
 .form-field textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
 }
 
-/* Búsqueda de Cliente */
 .search-container {
   position: relative;
-}
-
-.search-input {
-  width: 100%;
 }
 
 .search-dropdown {
@@ -972,11 +1212,7 @@ export default {
 }
 
 .dropdown-option:hover {
-  background-color: #f8fafc;
-}
-
-.dropdown-option:last-child {
-  border-bottom: none;
+  background-color: #f8f9fa;
 }
 
 .client-info {
@@ -995,7 +1231,6 @@ export default {
   color: var(--text-secondary);
 }
 
-/* Estado */
 .status-indicator {
   display: flex;
   align-items: center;
@@ -1017,128 +1252,38 @@ export default {
   background-color: currentColor;
 }
 
-/* Tabla de Productos */
-.products-table-wrapper {
-  overflow-x: auto;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-}
-
-.products-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.products-table th {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  padding: 1rem;
-  text-align: left;
-  font-weight: 600;
-  color: var(--text-primary);
-  border-bottom: 2px solid var(--border-color);
-}
-
-.products-table td {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
-  vertical-align: top;
-  position: relative;
-}
-
-.product-row:hover {
-  background-color: #f8fafc;
-}
-
-.product-input,
-.number-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-}
-
-.currency-input,
-.percentage-input {
-  display: flex;
-  align-items: center;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-
-.currency-symbol,
-.percentage-symbol {
-  padding: 0.5rem;
-  background-color: #f8fafc;
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-
-.currency-input input,
-.percentage-input input {
-  border: none;
-  flex: 1;
-}
-
-.total-display {
-  font-weight: 600;
-  color: var(--primary-color);
-  text-align: right;
-}
-
-/* Sugerencias de Productos */
-.suggestions-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: white;
-  border: 1px solid var(--border-color);
-  border-top: none;
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-  max-height: 150px;
-  overflow-y: auto;
-  z-index: 10;
-  box-shadow: var(--shadow-md);
-}
-
-.suggestion-option {
-  padding: 0.75rem;
-  cursor: pointer;
-  border-bottom: 1px solid var(--border-color);
-  transition: background-color 0.2s ease;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.suggestion-option:hover {
-  background-color: #f8fafc;
-}
-
-.suggestion-option:last-child {
-  border-bottom: none;
-}
-
-.suggestion-name {
-  font-weight: 500;
-}
-
-.suggestion-price {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-/* Condiciones Comerciales */
 .conditions-editor textarea {
   width: 100%;
   min-height: 120px;
   resize: vertical;
 }
 
-/* Panel de Totales */
+/* Botones */
+.btn-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-icon:hover {
+  background: #f8f9fa;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.clear-btn:hover {
+  border-color: var(--error-color);
+  color: var(--error-color);
+}
+
+/* Panel de totales y acciones conservados */
 .totals-panel {
   position: fixed;
   bottom: 6rem;
@@ -1148,20 +1293,14 @@ export default {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-color);
-  z-index: 20;
+  z-index: 200;
 }
 
 .totals-header {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(145deg, #f8f9fa, #e9ecef);
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--border-color);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-
-.totals-header h4 {
-  margin: 0;
-  font-weight: 600;
-  color: var(--text-primary);
 }
 
 .totals-content {
@@ -1182,7 +1321,7 @@ export default {
 }
 
 .total-row .value.negative {
-  color: var(--danger-color);
+  color: var(--error-color);
 }
 
 .total-separator {
@@ -1191,7 +1330,6 @@ export default {
   margin: 1rem 0;
 }
 
-/* Panel de Acciones */
 .actions-panel {
   position: fixed;
   bottom: 0;
@@ -1204,32 +1342,24 @@ export default {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 2rem;
-  box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1);
-  z-index: 30;
+  box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 300;
 }
 
-.actions-left {
-  display: flex;
-  gap: 1rem;
-}
-
-.actions-center {
-  display: flex;
-  justify-content: center;
-}
-
+.actions-left,
 .actions-right {
   display: flex;
   gap: 1rem;
+}
+
+.actions-right {
   justify-content: flex-end;
 }
 
-/* Botones */
 .btn {
   padding: 0.75rem 1.5rem;
   border-radius: var(--radius-md);
   font-weight: 600;
-  font-size: 0.9rem;
   border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -1238,11 +1368,7 @@ export default {
   gap: 0.5rem;
   text-decoration: none;
   background: transparent;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  font-size: 0.9rem;
 }
 
 .btn.primary {
@@ -1251,15 +1377,13 @@ export default {
 }
 
 .btn.primary:hover:not(:disabled) {
-  background: var(--primary-dark);
+  background: #004080;
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
 }
 
 .btn.primary-outline {
   border-color: var(--primary-color);
   color: var(--primary-color);
-  background: transparent;
 }
 
 .btn.primary-outline:hover:not(:disabled) {
@@ -1273,70 +1397,30 @@ export default {
 }
 
 .btn.success:hover:not(:disabled) {
-  background: #047857;
+  background: #229954;
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
 }
 
 .btn.secondary {
-  background: var(--secondary-color);
+  background: var(--text-secondary);
   color: white;
-}
-
-.btn.secondary:hover:not(:disabled) {
-  background: #475569;
 }
 
 .btn.secondary-outline {
-  border-color: var(--secondary-color);
-  color: var(--secondary-color);
-  background: transparent;
+  border-color: var(--text-secondary);
+  color: var(--text-secondary);
 }
 
 .btn.secondary-outline:hover:not(:disabled) {
-  background: var(--secondary-color);
+  background: var(--text-secondary);
   color: white;
 }
 
-.btn-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.btn-icon:hover {
-  background: #f8fafc;
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-
-.btn-remove {
-  width: 2rem;
-  height: 2rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid #fecaca;
-  background: #fef2f2;
-  color: var(--danger-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-remove:hover {
-  background: var(--danger-color);
-  color: white;
-}
-
-/* Indicadores */
 .save-indicator {
   display: flex;
   align-items: center;
@@ -1354,7 +1438,7 @@ export default {
   to { transform: rotate(360deg); }
 }
 
-/* Modal */
+/* Modal conservado */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1365,7 +1449,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  z-index: 500;
 }
 
 .modal-content {
@@ -1389,8 +1473,38 @@ export default {
   justify-content: space-between;
 }
 
-.modal-header h3 {
-  margin: 0;
+.modal-body {
+  padding: 2rem;
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+.preview-content {
+  font-family: Arial, sans-serif;
+}
+
+.preview-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.preview-table th,
+.preview-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.preview-table th {
+  background-color: #f8f9fa;
   font-weight: 600;
 }
 
@@ -1410,74 +1524,6 @@ export default {
 .btn-close:hover {
   background: #f3f4f6;
   color: var(--text-primary);
-}
-
-.modal-body {
-  padding: 2rem;
-  overflow-y: auto;
-  max-height: 70vh;
-}
-
-/* Vista Previa */
-.preview-content {
-  font-family: Arial, sans-serif;
-}
-
-.preview-quotation {
-  max-width: 100%;
-}
-
-.preview-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid var(--border-color);
-}
-
-.preview-header h2 {
-  margin: 0;
-  color: var(--primary-color);
-}
-
-.preview-client,
-.preview-products {
-  margin-bottom: 2rem;
-}
-
-.preview-client h4,
-.preview-products h4 {
-  margin: 0 0 1rem 0;
-  color: var(--text-primary);
-}
-
-.preview-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-
-.preview-table th,
-.preview-table td {
-  padding: 0.75rem;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.preview-table th {
-  background-color: #f8fafc;
-  font-weight: 600;
-}
-
-.preview-total {
-  text-align: right;
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 2px solid var(--border-color);
-}
-
-.preview-total h3 {
-  margin: 0;
-  color: var(--primary-color);
 }
 
 /* Responsive */
@@ -1503,6 +1549,17 @@ export default {
   .actions-right {
     justify-content: center;
   }
+}
+
+@media (max-width: 768px) {
+  .products-table.compact {
+    font-size: 0.7rem;
+  }
+  
+  .products-table.compact th,
+  .products-table.compact td {
+    padding: 0.3rem;
+  }
   
   .form-row {
     grid-template-columns: 1fr;
@@ -1510,46 +1567,8 @@ export default {
   
   .header-content {
     flex-direction: column;
-    gap: 1rem;
     text-align: center;
-  }
-  
-  .progress-indicator {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .progress-line {
-    width: 2px;
-    height: 2rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .products-table-wrapper {
-    font-size: 0.8rem;
-  }
-  
-  .products-table th,
-  .products-table td {
-    padding: 0.5rem;
-  }
-  
-  .panel-content {
-    padding: 1rem;
-  }
-  
-  .btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.8rem;
-  }
-  
-  .main-title {
-    font-size: 2rem !important;
-  }
-  
-  .preview-modal {
-    width: 95vw;
+    gap: 1rem;
   }
 }
 </style>

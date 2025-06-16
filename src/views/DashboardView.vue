@@ -319,7 +319,7 @@ body {
   margin: 0;
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 9999; /* ✅ MAYOR PRIORIDAD */
   box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -549,6 +549,9 @@ body {
 
 /* Área de trabajo */
 .workspace-area {
+  position: relative; 
+  z-index: 1; 
+  overflow: visible; 
   width: 100%;
   max-width: 1400px;
   margin: 1.5rem auto;
