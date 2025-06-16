@@ -1,4 +1,4 @@
-<!-- filepath: src/views/DashboardView.vue -->
+<!-- filepath: d:\Users\Andresferaes\Documents\PROYECTOADSO\vuejs\src\views\DashboardView.vue -->
 <template>
   <div class="dashboard">
     <!-- Encabezado independiente: logo y bienvenida -->
@@ -128,7 +128,7 @@ const getIcon = (key) => {
   return icons[key] || '📋'
 }
 
-//botones barra de dashboard
+// ✅ CORRECCIÓN: Botones barra de dashboard con rutas corregidas
 const options = {
   clientes: [
     { text: 'Nuevo', path: '/dashboard/clientes/nuevo' },
@@ -142,14 +142,15 @@ const options = {
     { text: 'Eliminar', path: '/productos/eliminar' },
     { text: 'Consultar', path: '/dashboard/products/read' },
   ],
+  // ✅ AQUÍ ESTÁ LA CORRECCIÓN PRINCIPAL:
   cotizacion: [
     { text: 'Nueva', path: '/dashboard/cotizacion/nueva' },
-    { text: 'Historial', path: '/cotizacion/historial' },
+    { text: 'Historial', path: '/dashboard/cotizacion/historial' }, // ← CORREGIDO: Agregado /dashboard/
   ],
-
-  stackflow: [{ text: 'Sistema', path: '/stackflow/info' }],
+  stackflow: [
+    { text: 'Sistema', path: '/stackflow/info' }
+  ],
   cuenta: [
-    // Nueva opción
     { text: 'Mi Perfil', path: '/dashboard/user' },
   ],
 }
@@ -166,7 +167,10 @@ function hideMenu(menu) {
   menus.value[menu] = false
 }
 
+// ✅ FUNCIÓN NAVIGATE MEJORADA CON DEBUG:
 function navigate(path) {
+  console.log('🚀 DashboardView: Navegando a:', path)
+  
   // Cerrar todos los menús antes de navegar
   Object.keys(menus.value).forEach((key) => {
     menus.value[key] = false
@@ -175,58 +179,93 @@ function navigate(path) {
   // Mostrar indicador de carga
   isLoading.value = true
 
-  // Navegar a la ruta solicitada
-  router.push(path).finally(() => {
-    // Una vez completada la navegación, quitar el indicador de carga
-    nextTick(() => {
-      isLoading.value = false
-    })
+  // ✅ VALIDAR QUE LA RUTA EXISTE ANTES DE NAVEGAR:
+  const routeExists = router.getRoutes().some(route => {
+    // Verificar si existe una ruta que coincida con el path
+    return route.path === path || route.path.replace(':id?', '') === path
   })
+
+  if (!routeExists) {
+    console.error('❌ Ruta no encontrada en el router:', path)
+    console.log('📋 Rutas disponibles:', router.getRoutes().map(r => ({ name: r.name, path: r.path })))
+    isLoading.value = false
+    alert(`Error: La ruta "${path}" no está configurada en el sistema.`)
+    return
+  }
+
+  // Navegar a la ruta solicitada
+  router.push(path)
+    .then(() => {
+      console.log('✅ Navegación exitosa a:', path)
+    })
+    .catch((error) => {
+      console.error('❌ Error navegando a:', path, error)
+      alert(`Error navegando a ${path}: ${error.message}`)
+    })
+    .finally(() => {
+      // Una vez completada la navegación, quitar el indicador de carga
+      nextTick(() => {
+        isLoading.value = false
+      })
+    })
 }
 
 function logout() {
   try {
+    console.log('🚪 Cerrando sesión...')
+    
     // Limpiar datos de sesión
-    // Eliminar token JWT de autenticación
     localStorage.removeItem('access_token')
-    // Eliminar datos del usuario
     localStorage.removeItem('user')
 
+    console.log('✅ Sesión cerrada correctamente')
+    
     // Redireccionar al login
     router.push('/login')
   } catch (error) {
-    console.error('Error al cerrar sesión:', error)
+    console.error('❌ Error al cerrar sesión:', error)
   }
 }
 
 onMounted(() => {
-  // Primero verificar el token
+  console.log('📍 DashboardView montado')
+  
+  // Verificar el token
   const token = localStorage.getItem('access_token')
   if (!token) {
-    // Si no hay token, redireccionar al login
+    console.log('❌ No hay token, redirigiendo al login')
     router.push('/login')
     return
   }
 
-  // Si hay token, entonces cargar datos del usuario
+  // Cargar datos del usuario
   try {
     const user = localStorage.getItem('user')
     if (user) {
       const userData = JSON.parse(user)
       userName.value = userData.name || 'Usuario'
+      console.log('✅ Usuario cargado:', userName.value)
     } else {
       userName.value = 'Usuario'
+      console.log('⚠️ No hay datos de usuario, usando valor por defecto')
     }
   } catch (error) {
-    console.error('Error al obtener datos de usuario:', error)
+    console.error('❌ Error al obtener datos de usuario:', error)
     userName.value = 'Usuario'
   }
+
+  // ✅ DEBUG: Mostrar rutas disponibles
+  console.log('📋 Rutas disponibles en el router:')
+  router.getRoutes().forEach(route => {
+    console.log(`  - ${route.name}: ${route.path}`)
+  })
 
   // Agregar listener para cerrar menús al hacer clic fuera
   document.addEventListener('click', handleClickOutside)
 })
 
 onBeforeUnmount(() => {
+  console.log('📍 DashboardView desmontado')
   // Eliminar listener al desmontar el componente
   document.removeEventListener('click', handleClickOutside)
 })
@@ -290,7 +329,7 @@ body {
 .header-content {
   display: flex;
   align-items: center;
-  justify-content: center; /* ✅ CENTRADO COMPLETO */
+  justify-content: center;
   gap: 20px;
   width: 100%;
   max-width: 1400px;
@@ -319,7 +358,7 @@ body {
   margin: 0;
   position: sticky;
   top: 0;
-  z-index: 9999; /* ✅ MAYOR PRIORIDAD */
+  z-index: 9999;
   box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);

@@ -1,724 +1,1224 @@
 <template>
-  <div class="quotation-history">
-    <!-- Encabezado de la página -->
-    <div class="page-header">
-      <h1>📋 Historial de Cotizaciones</h1>
-      <p>Consulta y gestiona todas las cotizaciones creadas</p>
+  <div class="quotation-history-workspace">
+    <!-- Header Principal -->
+    <div class="history-header">
+      <div class="header-content">
+        <div class="title-section">
+          <h1 class="main-title">
+            <span class="title-icon">📋</span>
+            Historial de Cotizaciones
+          </h1>
+          <p class="subtitle">Consulta y gestiona todas las cotizaciones creadas en el sistema</p>
+        </div>
+        <div class="stats-badge">
+          <span class="badge-label">Total:</span>
+          <span class="badge-number">{{ totalQuotations }}</span>
+        </div>
+      </div>
     </div>
 
-    <!-- Panel de búsqueda y filtros -->
-    <div class="search-panel">
-      <div class="search-row">
-        <!-- Búsqueda por número de cotización -->
-        <div class="search-group">
-          <label for="quotationNumber">🔢 Número de Cotización:</label>
-          <input
-            id="quotationNumber"
-            v-model="filters.quotationNumber"
-            type="text"
-            placeholder="Ej: COT-001"
-            @input="onSearch"
-            class="search-input"
-          >
+    <!-- Panel de Filtros Avanzados -->
+    <div class="filters-panel">
+      <div class="panel-header">
+        <h3><span class="section-icon">🔍</span>Filtros de Búsqueda</h3>
+        <div class="filter-actions">
+          <button class="btn-clear" @click="clearAllFilters">
+            <span class="btn-icon">🗑️</span>
+            Limpiar Filtros
+          </button>
+          <button class="btn-toggle" @click="toggleFiltersPanel">
+            <span class="btn-icon">{{ showFilters ? '🔼' : '🔽' }}</span>
+            {{ showFilters ? 'Ocultar' : 'Mostrar' }}
+          </button>
+        </div>
+      </div>
+      
+      <div v-show="showFilters" class="filters-content">
+        <!-- Búsqueda Rápida -->
+        <div class="quick-search">
+          <div class="search-field">
+            <label for="quickSearch">
+              <span class="field-icon">🔍</span>
+              Búsqueda Rápida
+            </label>
+            <input
+              id="quickSearch"
+              v-model="filters.quickSearch"
+              type="text"
+              placeholder="Buscar por número, cliente o cualquier término..."
+              class="search-input"
+              @input="applyFilters"
+            />
+            <small class="field-help">Busca en número de cotización, nombre del cliente o contenido general</small>
+          </div>
         </div>
 
-        <!-- Búsqueda por cliente -->
-        <div class="search-group">
-          <label for="clientName">👤 Cliente:</label>
-          <input
-            id="clientName"
-            v-model="filters.clientName"
-            type="text"
-            placeholder="Nombre del cliente"
-            @input="onSearch"
-            class="search-input"
-          >
+        <!-- Filtros Específicos -->
+        <div class="specific-filters">
+          <div class="filter-row">
+            <div class="filter-field">
+              <label for="quotationNumber">
+                <span class="field-icon">🔢</span>
+                Número de Cotización
+              </label>
+              <input
+                id="quotationNumber"
+                v-model="filters.quotationNumber"
+                type="text"
+                placeholder="Ej: COT-2024-001"
+                class="filter-input"
+                @input="applyFilters"
+              />
+              <small class="field-help">Número específico de cotización</small>
+            </div>
+
+            <div class="filter-field">
+              <label for="clientName">
+                <span class="field-icon">👤</span>
+                Cliente
+              </label>
+              <input
+                id="clientName"
+                v-model="filters.clientName"
+                type="text"
+                placeholder="Nombre o razón social del cliente"
+                class="filter-input"
+                @input="applyFilters"
+              />
+              <small class="field-help">Nombre o razón social del cliente</small>
+            </div>
+
+            <div class="filter-field">
+              <label for="status">
+                <span class="field-icon">📊</span>
+                Estado
+              </label>
+              <select
+                id="status"
+                v-model="filters.status"
+                class="filter-select"
+                @change="applyFilters"
+              >
+                <option value="">Todos los estados</option>
+                <option value="borrador">📝 Borrador</option>
+                <option value="enviada">📤 Enviada</option>
+                <option value="aprobada">✅ Aprobada</option>
+                <option value="facturada">🧾 Facturada</option>
+                <option value="rechazada">❌ Rechazada</option>
+                <option value="vencida">⏰ Vencida</option>
+              </select>
+              <small class="field-help">Filtra por estado de la cotización</small>
+            </div>
+          </div>
+
+          <div class="filter-row">
+            <div class="filter-field">
+              <label for="dateFrom">
+                <span class="field-icon">📅</span>
+                Fecha Desde
+              </label>
+              <input
+                id="dateFrom"
+                v-model="filters.dateFrom"
+                type="date"
+                class="filter-input"
+                @change="applyFilters"
+              />
+              <small class="field-help">Fecha inicial del periodo</small>
+            </div>
+
+            <div class="filter-field">
+              <label for="dateTo">
+                <span class="field-icon">📅</span>
+                Fecha Hasta
+              </label>
+              <input
+                id="dateTo"
+                v-model="filters.dateTo"
+                type="date"
+                class="filter-input"
+                @change="applyFilters"
+              />
+              <small class="field-help">Fecha final del periodo</small>
+            </div>
+
+            <div class="filter-field">
+              <label for="amountRange">
+                <span class="field-icon">💰</span>
+                Rango de Monto
+              </label>
+              <select
+                id="amountRange"
+                v-model="filters.amountRange"
+                class="filter-select"
+                @change="applyFilters"
+              >
+                <option value="">Todos los montos</option>
+                <option value="0-100000">💵 Hasta $100,000</option>
+                <option value="100000-500000">💰 $100,000 - $500,000</option>
+                <option value="500000-1000000">💸 $500,000 - $1,000,000</option>
+                <option value="1000000+">💎 Más de $1,000,000</option>
+              </select>
+              <small class="field-help">Filtra por rango de valor total</small>
+            </div>
+          </div>
         </div>
 
-        <!-- Filtro por estado -->
-        <div class="search-group">
-          <label for="status">📊 Estado:</label>
-          <select
-            id="status"
-            v-model="filters.status"
-            @change="onSearch"
-            class="search-select"
-          >
-            <option value="">Todos los estados</option>
-            <option value="borrador">Borrador</option>
-            <option value="enviada">Enviada</option>
-            <option value="aprobada">Aprobada</option>
-            <option value="rechazada">Rechazada</option>
-          </select>
+        <!-- Indicadores de Filtros Activos -->
+        <div v-if="activeFiltersCount > 0" class="active-filters">
+          <span class="filters-label">Filtros Activos ({{ activeFiltersCount }}):</span>
+          <div class="filter-tags">
+            <span v-if="filters.quickSearch" class="filter-tag">
+              🔍 "{{ filters.quickSearch }}"
+              <button class="tag-remove" @click="clearFilter('quickSearch')">✕</button>
+            </span>
+            <span v-if="filters.quotationNumber" class="filter-tag">
+              🔢 {{ filters.quotationNumber }}
+              <button class="tag-remove" @click="clearFilter('quotationNumber')">✕</button>
+            </span>
+            <span v-if="filters.clientName" class="filter-tag">
+              👤 {{ filters.clientName }}
+              <button class="tag-remove" @click="clearFilter('clientName')">✕</button>
+            </span>
+            <span v-if="filters.status" class="filter-tag">
+              📊 {{ getStatusText(filters.status) }}
+              <button class="tag-remove" @click="clearFilter('status')">✕</button>
+            </span>
+            <span v-if="filters.dateFrom || filters.dateTo" class="filter-tag">
+              📅 {{ formatDateRange() }}
+              <button class="tag-remove" @click="clearDateFilters">✕</button>
+            </span>
+            <span v-if="filters.amountRange" class="filter-tag">
+              💰 {{ getAmountRangeText(filters.amountRange) }}
+              <button class="tag-remove" @click="clearFilter('amountRange')">✕</button>
+            </span>
+          </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Botón de limpiar filtros -->
-        <div class="search-group">
-          <button @click="clearFilters" class="clear-filters-btn">
-            🗑️ Limpiar
+    <!-- Panel de Estadísticas -->
+    <div class="stats-panel">
+      <div class="stat-card borrador">
+        <div class="stat-content">
+          <span class="stat-icon">📝</span>
+          <div class="stat-info">
+            <span class="stat-number">{{ statistics.borrador }}</span>
+            <span class="stat-label">Borradores</span>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card enviada">
+        <div class="stat-content">
+          <span class="stat-icon">📤</span>
+          <div class="stat-info">
+            <span class="stat-number">{{ statistics.enviada }}</span>
+            <span class="stat-label">Enviadas</span>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card aprobada">
+        <div class="stat-content">
+          <span class="stat-icon">✅</span>
+          <div class="stat-info">
+            <span class="stat-number">{{ statistics.aprobada }}</span>
+            <span class="stat-label">Aprobadas</span>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card total">
+        <div class="stat-content">
+          <span class="stat-icon">💰</span>
+          <div class="stat-info">
+            <span class="stat-number">${{ formatNumber(statistics.totalValue) }}</span>
+            <span class="stat-label">Valor Total</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de Resultados -->
+    <div class="results-panel">
+      <div class="panel-header">
+        <h3>
+          <span class="section-icon">📊</span>
+          Resultados ({{ filteredQuotations.length }})
+        </h3>
+        <div class="panel-actions">
+          <div class="sort-controls">
+            <label>Ordenar por:</label>
+            <select v-model="sortBy" class="sort-select" @change="applySorting">
+              <option value="created_at">📅 Fecha de Creación</option>
+              <option value="quotation_number">🔢 Número</option>
+              <option value="client_name">👤 Cliente</option>
+              <option value="total">💰 Monto</option>
+              <option value="status">📊 Estado</option>
+            </select>
+            <button class="sort-direction-btn" @click="toggleSortDirection">
+              {{ sortDirection === 'asc' ? '↑' : '↓' }}
+            </button>
+          </div>
+          <button class="btn-new-quotation" @click="createNewQuotation">
+            <span class="btn-icon">➕</span>
+            Nueva Cotización
           </button>
         </div>
       </div>
 
-      <!-- Filtros de fecha -->
-      <div class="date-filters">
-        <div class="date-group">
-          <label for="startDate">📅 Fecha desde:</label>
-          <input
-            id="startDate"
-            v-model="filters.startDate"
-            type="date"
-            @change="onSearch"
-            class="date-input"
-          >
+      <div class="panel-content">
+        <!-- Estado de Carga -->
+        <div v-if="isLoading" class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Cargando cotizaciones...</p>
         </div>
-        <div class="date-group">
-          <label for="endDate">📅 Fecha hasta:</label>
-          <input
-            id="endDate"
-            v-model="filters.endDate"
-            type="date"
-            @change="onSearch"
-            class="date-input"
-          >
+
+        <!-- Estado Sin Resultados -->
+        <div v-else-if="filteredQuotations.length === 0" class="empty-state">
+          <div class="empty-icon">📋</div>
+          <h3>{{ hasActiveFilters ? 'No se encontraron resultados' : 'No hay cotizaciones creadas' }}</h3>
+          <p v-if="hasActiveFilters">
+            Intenta ajustar los filtros de búsqueda para obtener resultados diferentes
+          </p>
+          <p v-else>
+            Crea tu primera cotización para comenzar a gestionar tus ventas
+          </p>
+          <button class="btn-primary" @click="hasActiveFilters ? clearAllFilters() : createNewQuotation()">
+            {{ hasActiveFilters ? '🔄 Limpiar Filtros' : '➕ Crear Primera Cotización' }}
+          </button>
         </div>
-      </div>
-    </div>
 
-    <!-- Estadísticas rápidas -->
-    <div class="stats-panel">
-      <div class="stat-card">
-        <h3>{{ totalQuotations }}</h3>
-        <p>Total Cotizaciones</p>
-      </div>
-      <div class="stat-card">
-        <h3>{{ stats.pending }}</h3>
-        <p>Pendientes</p>
-      </div>
-      <div class="stat-card">
-        <h3>{{ stats.approved }}</h3>
-        <p>Aprobadas</p>
-      </div>
-      <div class="stat-card">
-        <h3>${{ formatCurrency(stats.totalValue) }}</h3>
-        <p>Valor Total</p>
-      </div>
-    </div>
-
-    <!-- Tabla de cotizaciones -->
-    <div class="table-container">
-      <!-- Estado de carga -->
-      <div v-if="loading" class="loading-state">
-        <div class="spinner"></div>
-        <p>Cargando cotizaciones...</p>
-      </div>
-
-      <!-- Estado de error -->
-      <div v-else-if="error" class="error-state">
-        <h3>⚠️ Error al cargar cotizaciones</h3>
-        <p>{{ error }}</p>
-        <button @click="fetchQuotations" class="retry-btn">
-          🔄 Reintentar
-        </button>
-      </div>
-
-      <!-- Tabla con datos -->
-      <div v-else-if="filteredQuotations.length > 0" class="table-wrapper">
-        <table class="quotations-table">
-          <thead>
-            <tr>
-              <th @click="sortBy('quotation_number')" class="sortable">
-                🔢 Número
-                <span v-if="sortField === 'quotation_number'" class="sort-indicator">
-                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                </span>
-              </th>
-              <th @click="sortBy('client_name')" class="sortable">
-                👤 Cliente
-                <span v-if="sortField === 'client_name'" class="sort-indicator">
-                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                </span>
-              </th>
-              <th @click="sortBy('created_at')" class="sortable">
-                📅 Fecha
-                <span v-if="sortField === 'created_at'" class="sort-indicator">
-                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                </span>
-              </th>
-              <th @click="sortBy('total')" class="sortable">
-                💰 Total
-                <span v-if="sortField === 'total'" class="sort-indicator">
-                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                </span>
-              </th>
-              <th>📊 Estado</th>
-              <th>⚙️ Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="quotation in paginatedQuotations" :key="quotation.id" class="quotation-row">
-              <!-- Número de cotización -->
-              <td class="quotation-number">
-                <strong>{{ quotation.quotation_number }}</strong>
-              </td>
-
-              <!-- Cliente -->
-              <td class="client-info">
-                <div class="client-name">{{ quotation.client_name }}</div>
-                <div class="client-email" v-if="quotation.client_email">
-                  {{ quotation.client_email }}
-                </div>
-              </td>
-
-              <!-- Fecha -->
-              <td class="date-info">
-                <div class="create-date">{{ formatDate(quotation.created_at) }}</div>
-                <div class="time-ago">{{ getTimeAgo(quotation.created_at) }}</div>
-              </td>
-
-              <!-- Total -->
-              <td class="total-amount">
-                <strong>${{ formatCurrency(quotation.total) }}</strong>
-              </td>
-
-              <!-- Estado -->
-              <td class="status-cell">
-                <span :class="['status-badge', `status-${quotation.status}`]">
-                  {{ getStatusText(quotation.status) }}
-                </span>
-              </td>
-
-              <!-- Acciones -->
-              <td class="actions-cell">
-                <div class="action-buttons">
-                  <button
-                    @click="viewQuotation(quotation)"
-                    class="action-btn view-btn"
-                    title="Ver detalles"
-                  >
-                    👁️
-                  </button>
-                  <button
-                    @click="editQuotation(quotation)"
-                    class="action-btn edit-btn"
-                    title="Editar"
-                    :disabled="quotation.status === 'aprobada'"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    @click="duplicateQuotation(quotation)"
-                    class="action-btn duplicate-btn"
-                    title="Duplicar"
-                  >
-                    📋
-                  </button>
-                  <button
-                    @click="generatePDF(quotation)"
-                    class="action-btn pdf-btn"
-                    title="Generar PDF"
-                  >
-                    📄
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Estado sin datos -->
-      <div v-else class="empty-state">
-        <div class="empty-icon">📋</div>
-        <h3>No se encontraron cotizaciones</h3>
-        <p v-if="hasActiveFilters">
-          Intenta ajustar los filtros de búsqueda
-        </p>
-        <p v-else>
-          Aún no has creado ninguna cotización
-        </p>
-        <button @click="createNewQuotation" class="create-btn">
-          ➕ Crear Nueva Cotización
-        </button>
+        <!-- Tabla de Cotizaciones -->
+        <div v-else class="quotations-table-wrapper">
+          <table class="quotations-table">
+            <thead>
+              <tr>
+                <th class="col-number">Número</th>
+                <th class="col-client">Cliente</th>
+                <th class="col-date">Fecha</th>
+                <th class="col-amount">Monto</th>
+                <th class="col-status">Estado</th>
+                <th class="col-actions">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="quotation in paginatedQuotations" :key="quotation.id" class="quotation-row">
+                <td class="col-number">
+                  <div class="quotation-number">
+                    <span class="number-text">{{ quotation.quotation_number || `COT-${String(quotation.id).padStart(3, '0')}` }}</span>
+                    <span class="number-id">#{{ quotation.id }}</span>
+                  </div>
+                </td>
+                <td class="col-client">
+                  <div class="client-info">
+                    <span class="client-name">{{ quotation.client_name }}</span>
+                    <span v-if="quotation.client_email" class="client-email">{{ quotation.client_email }}</span>
+                  </div>
+                </td>
+                <td class="col-date">
+                  <div class="date-info">
+                    <span class="date-created">{{ formatDate(quotation.created_at) }}</span>
+                    <span class="date-relative">{{ getRelativeTime(quotation.created_at) }}</span>
+                  </div>
+                </td>
+                <td class="col-amount">
+                  <div class="amount-info">
+                    <span class="amount-value">${{ formatNumber(quotation.total) }}</span>
+                  </div>
+                </td>
+                <td class="col-status">
+                  <span :class="['status-badge', `status-${quotation.status}`]">
+                    <span class="status-icon">{{ getStatusIcon(quotation.status) }}</span>
+                    <span class="status-text">{{ getStatusText(quotation.status) }}</span>
+                  </span>
+                </td>
+                <td class="col-actions">
+                  <div class="action-buttons">
+                    <button 
+                      class="action-btn view-btn"
+                      title="Ver detalles completos"
+                      @click="viewQuotationDetails(quotation)"
+                    >
+                      👁️
+                    </button>
+                    <button 
+                      class="action-btn edit-btn"
+                      :disabled="!canEditQuotation(quotation)"
+                      :title="getEditTooltip(quotation)"
+                      @click="editQuotation(quotation)"
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      class="action-btn duplicate-btn"
+                      title="Crear una copia de esta cotización"
+                      @click="duplicateQuotation(quotation)"
+                    >
+                      📋
+                    </button>
+                    <button 
+                      class="action-btn delete-btn"
+                      :disabled="!canDeleteQuotation(quotation)"
+                      :title="getDeleteTooltip(quotation)"
+                      @click="deleteQuotation(quotation)"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
     <!-- Paginación -->
-    <div v-if="totalPages > 1" class="pagination">
-      <button
-        @click="changePage(currentPage - 1)"
-        :disabled="currentPage === 1"
-        class="page-btn"
-      >
-        ← Anterior
-      </button>
+    <div v-if="totalPages > 1" class="pagination-panel">
+      <div class="pagination-info">
+        <span>Mostrando {{ startItem }} - {{ endItem }} de {{ filteredQuotations.length }} cotizaciones</span>
+      </div>
+      <div class="pagination-controls">
+        <button 
+          class="page-btn"
+          :disabled="currentPage === 1"
+          @click="goToPage(1)"
+        >
+          ⏮️
+        </button>
+        <button 
+          class="page-btn"
+          :disabled="currentPage === 1"
+          @click="goToPage(currentPage - 1)"
+        >
+          ◀️
+        </button>
+        <span class="page-current">{{ currentPage }} / {{ totalPages }}</span>
+        <button 
+          class="page-btn"
+          :disabled="currentPage === totalPages"
+          @click="goToPage(currentPage + 1)"
+        >
+          ▶️
+        </button>
+        <button 
+          class="page-btn"
+          :disabled="currentPage === totalPages"
+          @click="goToPage(totalPages)"
+        >
+          ⏭️
+        </button>
+      </div>
+      <div class="items-per-page">
+        <label>Mostrar:</label>
+        <select v-model="itemsPerPage" class="items-select" @change="changeItemsPerPage">
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+        <span>por página</span>
+      </div>
+    </div>
 
-      <span class="page-info">
-        Página {{ currentPage }} de {{ totalPages }}
-        ({{ filteredQuotations.length }} cotizaciones)
-      </span>
-
-      <button
-        @click="changePage(currentPage + 1)"
-        :disabled="currentPage === totalPages"
-        class="page-btn"
-      >
-        Siguiente →
-      </button>
+    <!-- Modal de Confirmación para Eliminar -->
+    <div v-if="showDeleteModal" class="modal-overlay" @click="cancelDelete">
+      <div class="modal-content delete-modal" @click.stop>
+        <div class="modal-header">
+          <h3>⚠️ Confirmar Eliminación</h3>
+        </div>
+        <div class="modal-body">
+          <p>¿Estás seguro de que deseas eliminar la cotización <strong>{{ quotationToDelete?.quotation_number }}</strong>?</p>
+          <p class="warning-text">Esta acción no se puede deshacer.</p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" @click="cancelDelete">Cancelar</button>
+          <button class="btn-danger" @click="confirmDelete">Eliminar</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import axios from '@/services/axios' // Importar axios configurado
-
 export default {
   name: 'QuotationHistoryView',
   data() {
     return {
-      // Lista de cotizaciones desde el backend
-      quotations: [],
+      isLoading: false,
+      showFilters: true,
+      showDeleteModal: false,
+      quotationToDelete: null,
       
-      // Estados de la aplicación
-      loading: false,       // Estado de carga
-      error: null,          // Manejo de errores
-      
-      // Filtros de búsqueda
       filters: {
-        quotationNumber: '',  // Búsqueda por número
-        clientName: '',       // Búsqueda por cliente
-        status: '',           // Filtro por estado
-        startDate: '',        // Fecha desde
-        endDate: '',          // Fecha hasta
-      },
-      
-      // Configuración de ordenamiento
-      sortField: 'created_at',  // Campo por el que ordenar
-      sortDirection: 'desc',    // Dirección del ordenamiento
-      
-      // Configuración de paginación
-      currentPage: 1,           // Página actual
-      itemsPerPage: 10,         // Elementos por página
-      
-      // Estadísticas calculadas
-      stats: {
-        pending: 0,
-        approved: 0,
-        totalValue: 0,
-      },
-    }
-  },
-
-  // Propiedades computadas para lógica reactiva
-  computed: {
-    // Filtrar cotizaciones según criterios de búsqueda
-    filteredQuotations() {
-      let filtered = [...this.quotations];
-
-      // Filtro por número de cotización
-      if (this.filters.quotationNumber.trim()) {
-        filtered = filtered.filter(q => 
-          q.quotation_number.toLowerCase().includes(this.filters.quotationNumber.toLowerCase())
-        );
-      }
-
-      // Filtro por nombre de cliente
-      if (this.filters.clientName.trim()) {
-        filtered = filtered.filter(q =>
-          q.client_name.toLowerCase().includes(this.filters.clientName.toLowerCase())
-        );
-      }
-
-      // Filtro por estado
-      if (this.filters.status) {
-        filtered = filtered.filter(q => q.status === this.filters.status);
-      }
-
-      // Filtro por fecha desde
-      if (this.filters.startDate) {
-        filtered = filtered.filter(q => {
-          const quotationDate = new Date(q.created_at);
-          const startDate = new Date(this.filters.startDate);
-          return quotationDate >= startDate;
-        });
-      }
-
-      // Filtro por fecha hasta
-      if (this.filters.endDate) {
-        filtered = filtered.filter(q => {
-          const quotationDate = new Date(q.created_at);
-          const endDate = new Date(this.filters.endDate);
-          endDate.setHours(23, 59, 59, 999); // Incluir todo el día
-          return quotationDate <= endDate;
-        });
-      }
-
-      // Aplicar ordenamiento
-      filtered.sort((a, b) => {
-        let aValue = a[this.sortField];
-        let bValue = b[this.sortField];
-
-        // Manejar números
-        if (this.sortField === 'total') {
-          aValue = parseFloat(aValue) || 0;
-          bValue = parseFloat(bValue) || 0;
-        }
-
-        // Manejar fechas
-        if (this.sortField === 'created_at') {
-          aValue = new Date(aValue);
-          bValue = new Date(bValue);
-        }
-
-        // Manejar strings
-        if (typeof aValue === 'string') {
-          aValue = aValue.toLowerCase();
-          bValue = bValue.toLowerCase();
-        }
-
-        if (this.sortDirection === 'asc') {
-          return aValue > bValue ? 1 : -1;
-        } else {
-          return aValue < bValue ? 1 : -1;
-        }
-      });
-
-      return filtered;
-    },
-
-    // Cotizaciones para la página actual
-    paginatedQuotations() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredQuotations.slice(start, end);
-    },
-
-    // Número total de páginas
-    totalPages() {
-      return Math.ceil(this.filteredQuotations.length / this.itemsPerPage);
-    },
-
-    // Total de cotizaciones
-    totalQuotations() {
-      return this.quotations.length;
-    },
-
-    // Verificar si hay filtros activos
-    hasActiveFilters() {
-      return Object.values(this.filters).some(filter => filter.trim() !== '');
-    },
-  },
-
-  // Cargar datos al montar el componente
-  async created() {
-    await this.fetchQuotations();
-  },
-
-  methods: {
-    // Método principal para obtener cotizaciones desde el backend
-    async fetchQuotations() {
-      this.loading = true;
-      this.error = null;
-
-      try {
-        console.log('Obteniendo cotizaciones del backend...');
-        
-        // Realizar petición al backend
-        const response = await axios.get('/quotations');
-        this.quotations = response.data;
-        
-        // Calcular estadísticas
-        this.calculateStats();
-        
-        console.log(`${this.quotations.length} cotizaciones cargadas exitosamente`);
-
-      } catch (err) {
-        // Manejar errores
-        if (err.response?.status === 401) {
-          this.error = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
-          setTimeout(() => {
-            this.$router.push('/login');
-          }, 3000);
-        } else {
-          this.error = 'Error al cargar las cotizaciones. Verifica tu conexión.';
-        }
-        
-        console.error('Error al obtener cotizaciones:', err);
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    // Calcular estadísticas de las cotizaciones
-    calculateStats() {
-      this.stats = {
-        pending: this.quotations.filter(q => q.status === 'borrador' || q.status === 'enviada').length,
-        approved: this.quotations.filter(q => q.status === 'aprobada').length,
-        totalValue: this.quotations.reduce((total, q) => total + (parseFloat(q.total) || 0), 0),
-      };
-    },
-
-    // Manejar búsqueda (con debounce)
-    onSearch() {
-      // Resetear a la primera página cuando se busca
-      this.currentPage = 1;
-      
-      // TODO: Implementar debounce para optimizar búsquedas
-      console.log('Búsqueda actualizada:', this.filters);
-    },
-
-    // Limpiar todos los filtros
-    clearFilters() {
-      this.filters = {
+        quickSearch: '',
         quotationNumber: '',
         clientName: '',
         status: '',
-        startDate: '',
-        endDate: '',
-      };
-      this.currentPage = 1;
-      console.log('Filtros limpiados');
-    },
-
-    // Ordenar por campo
-    sortBy(field) {
-      if (this.sortField === field) {
-        // Si ya está ordenando por este campo, cambiar dirección
-        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-      } else {
-        // Si es un campo nuevo, ordenar ascendente
-        this.sortField = field;
-        this.sortDirection = 'asc';
-      }
-      console.log(`Ordenando por ${field} (${this.sortDirection})`);
-    },
-
-    // Cambiar página
-    changePage(newPage) {
-      if (newPage >= 1 && newPage <= this.totalPages) {
-        this.currentPage = newPage;
-        console.log(`Cambio a página ${newPage}`);
-      }
-    },
-
-    // Ver detalles de una cotización
-    viewQuotation(quotation) {
-      console.log('Ver cotización:', quotation.quotation_number);
-      // TODO: Implementar modal o navegación a vista de detalles
-      alert(`Ver detalles de ${quotation.quotation_number}\n\nEsta funcionalidad se implementará próximamente.`);
-    },
-
-    // Editar cotización
-    editQuotation(quotation) {
-      if (quotation.status === 'aprobada') {
-        alert('No se pueden editar cotizaciones aprobadas');
-        return;
+        dateFrom: '',
+        dateTo: '',
+        amountRange: ''
+      },
+      
+      sortBy: 'created_at',
+      sortDirection: 'desc',
+      
+      currentPage: 1,
+      itemsPerPage: 25,
+      
+      quotations: [
+        {
+          id: 1,
+          quotation_number: 'COT-2024-001',
+          client_name: 'Empresa ABC S.A.S.',
+          client_email: 'contacto@empresaabc.com',
+          total: 2500000,
+          status: 'aprobada',
+          created_at: '2024-01-15T10:30:00Z',
+          items_count: 5
+        },
+        {
+          id: 2,
+          quotation_number: 'COT-2024-002',
+          client_name: 'Comercializadora XYZ Ltda.',
+          client_email: 'ventas@xyz.com',
+          total: 850000,
+          status: 'enviada',
+          created_at: '2024-01-20T14:15:00Z',
+          items_count: 3
+        },
+        {
+          id: 3,
+          quotation_number: 'COT-2024-003',
+          client_name: 'Industrias DEF',
+          client_email: 'compras@def.com',
+          total: 1200000,
+          status: 'borrador',
+          created_at: '2024-01-22T09:45:00Z',
+          items_count: 8
+        },
+        {
+          id: 4,
+          quotation_number: 'COT-2024-004',
+          client_name: 'Servicios GHI',
+          client_email: 'admin@ghi.com',
+          total: 450000,
+          status: 'rechazada',
+          created_at: '2024-01-25T16:20:00Z',
+          items_count: 2
+        },
+        {
+          id: 5,
+          quotation_number: 'COT-2024-005',
+          client_name: 'Tecnología JKL',
+          client_email: 'info@jkl.com',
+          total: 3200000,
+          status: 'facturada',
+          created_at: '2024-01-28T11:10:00Z',
+          items_count: 12
+        }
+      ]
+    }
+  },
+  
+  computed: {
+    filteredQuotations() {
+      let filtered = [...this.quotations]
+      
+      if (this.filters.quickSearch) {
+        const query = this.filters.quickSearch.toLowerCase()
+        filtered = filtered.filter(q => 
+          q.quotation_number.toLowerCase().includes(query) ||
+          q.client_name.toLowerCase().includes(query) ||
+          q.client_email.toLowerCase().includes(query)
+        )
       }
       
-      console.log('Editar cotización:', quotation.quotation_number);
-      // Navegar a la vista de edición con los datos precargados
-      this.$router.push({
-        name: 'QuotationCreate',
-        query: { edit: quotation.id }
-      });
+      if (this.filters.quotationNumber) {
+        filtered = filtered.filter(q => 
+          q.quotation_number.toLowerCase().includes(this.filters.quotationNumber.toLowerCase())
+        )
+      }
+      
+      if (this.filters.clientName) {
+        filtered = filtered.filter(q => 
+          q.client_name.toLowerCase().includes(this.filters.clientName.toLowerCase())
+        )
+      }
+      
+      if (this.filters.status) {
+        filtered = filtered.filter(q => q.status === this.filters.status)
+      }
+      
+      if (this.filters.dateFrom) {
+        filtered = filtered.filter(q => 
+          new Date(q.created_at) >= new Date(this.filters.dateFrom)
+        )
+      }
+      
+      if (this.filters.dateTo) {
+        const dateTo = new Date(this.filters.dateTo)
+        dateTo.setHours(23, 59, 59, 999)
+        filtered = filtered.filter(q => 
+          new Date(q.created_at) <= dateTo
+        )
+      }
+      
+      if (this.filters.amountRange) {
+        filtered = this.filterByAmountRange(filtered, this.filters.amountRange)
+      }
+      
+      filtered.sort((a, b) => {
+        let aValue = a[this.sortBy]
+        let bValue = b[this.sortBy]
+        
+        if (this.sortBy === 'total') {
+          aValue = parseFloat(aValue) || 0
+          bValue = parseFloat(bValue) || 0
+        } else if (this.sortBy === 'created_at') {
+          aValue = new Date(aValue)
+          bValue = new Date(bValue)
+        } else if (typeof aValue === 'string') {
+          aValue = aValue.toLowerCase()
+          bValue = bValue.toLowerCase()
+        }
+        
+        if (this.sortDirection === 'asc') {
+          return aValue > bValue ? 1 : -1
+        } else {
+          return aValue < bValue ? 1 : -1
+        }
+      })
+      
+      return filtered
     },
-
-    // Duplicar cotización
-    duplicateQuotation(quotation) {
-      console.log('Duplicar cotización:', quotation.quotation_number);
-      // Navegar a la vista de creación con los datos como base
-      this.$router.push({
-        name: 'QuotationCreate',
-        query: { duplicate: quotation.id }
-      });
+    
+    paginatedQuotations() {
+      const start = (this.currentPage - 1) * this.itemsPerPage
+      const end = start + this.itemsPerPage
+      return this.filteredQuotations.slice(start, end)
     },
-
-    // Generar PDF de cotización
-    generatePDF(quotation) {
-      console.log('Generar PDF:', quotation.quotation_number);
-      // TODO: Implementar generación de PDF
-      alert(`Generando PDF de ${quotation.quotation_number}\n\nEsta funcionalidad se implementará próximamente.`);
+    
+    statistics() {
+      const stats = {
+        borrador: 0,
+        enviada: 0,
+        aprobada: 0,
+        facturada: 0,
+        rechazada: 0,
+        totalValue: 0
+      }
+      
+      this.quotations.forEach(q => {
+        // ✅ CORRECCIÓN ESLint: Usar Object.prototype.hasOwnProperty.call()
+        if (Object.prototype.hasOwnProperty.call(stats, q.status)) {
+          stats[q.status]++
+        }
+        stats.totalValue += parseFloat(q.total) || 0
+      })
+      
+      return stats
     },
-
-    // Crear nueva cotización
+    
+    totalQuotations() {
+      return this.quotations.length
+    },
+    
+    totalPages() {
+      return Math.ceil(this.filteredQuotations.length / this.itemsPerPage)
+    },
+    
+    startItem() {
+      return (this.currentPage - 1) * this.itemsPerPage + 1
+    },
+    
+    endItem() {
+      return Math.min(this.currentPage * this.itemsPerPage, this.filteredQuotations.length)
+    },
+    
+    activeFiltersCount() {
+      return Object.values(this.filters).filter(value => value.trim() !== '').length
+    },
+    
+    hasActiveFilters() {
+      return this.activeFiltersCount > 0
+    }
+  },
+  
+  methods: {
+    applyFilters() {
+      this.currentPage = 1
+      console.log('🔍 Aplicando filtros:', this.filters)
+    },
+    
+    clearAllFilters() {
+      this.filters = {
+        quickSearch: '',
+        quotationNumber: '',
+        clientName: '',
+        status: '',
+        dateFrom: '',
+        dateTo: '',
+        amountRange: ''
+      }
+      this.currentPage = 1
+      console.log('🗑️ Filtros limpiados')
+    },
+    
+    clearFilter(filterName) {
+      this.filters[filterName] = ''
+      this.applyFilters()
+      console.log(`🗑️ Filtro ${filterName} eliminado`)
+    },
+    
+    clearDateFilters() {
+      this.filters.dateFrom = ''
+      this.filters.dateTo = ''
+      this.applyFilters()
+    },
+    
+    toggleFiltersPanel() {
+      this.showFilters = !this.showFilters
+    },
+    
+    filterByAmountRange(quotations, range) {
+      const [min, max] = this.parseAmountRange(range)
+      return quotations.filter(q => {
+        const amount = parseFloat(q.total) || 0
+        return amount >= min && (max === null || amount <= max)
+      })
+    },
+    
+    parseAmountRange(range) {
+      switch (range) {
+        case '0-100000':
+          return [0, 100000]
+        case '100000-500000':
+          return [100000, 500000]
+        case '500000-1000000':
+          return [500000, 1000000]
+        case '1000000+':
+          return [1000000, null]
+        default:
+          return [0, null]
+      }
+    },
+    
+    applySorting() {
+      console.log(`📊 Ordenando por ${this.sortBy} (${this.sortDirection})`)
+    },
+    
+    toggleSortDirection() {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
+      this.applySorting()
+    },
+    
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page
+        console.log(`📄 Navegando a página ${page}`)
+      }
+    },
+    
+    changeItemsPerPage() {
+      this.currentPage = 1
+      console.log(`📋 Mostrando ${this.itemsPerPage} elementos por página`)
+    },
+    
+    viewQuotationDetails(quotation) {
+      console.log('👁️ Ver detalles:', quotation.quotation_number)
+      alert(`Ver detalles de ${quotation.quotation_number}\n\nCliente: ${quotation.client_name}\nMonto: $${this.formatNumber(quotation.total)}\nEstado: ${this.getStatusText(quotation.status)}`)
+    },
+    
+    // ✅ NAVEGACIÓN CORREGIDA - CREAR NUEVA COTIZACIÓN
     createNewQuotation() {
-      this.$router.push({ name: 'QuotationCreate' });
-    },
-
-    // Métodos utilitarios para formateo
-    formatDate(dateString) {
-      if (!dateString) return '';
+      console.log('🚀 Navegando a crear nueva cotización...')
       try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es-CO', {
+        // Usar exactamente la misma navegación que funciona en otras vistas
+        this.$router.push({ name: 'quotation-create' })
+      } catch (error) {
+        console.error('❌ Error navegando a cotización nueva:', error)
+        // Fallback: usar ruta completa
+        window.location.href = '/dashboard/cotizacion/nueva'
+      }
+    },
+    
+    // ✅ NAVEGACIÓN CORREGIDA - EDITAR COTIZACIÓN
+    editQuotation(quotation) {
+      if (!this.canEditQuotation(quotation)) {
+        alert('No se puede editar esta cotización porque ya ha sido facturada o está en un estado no editable.')
+        return
+      }
+      
+      console.log('✏️ Editando cotización:', quotation.quotation_number)
+      try {
+        // Usar exactamente la misma navegación que funciona en otras vistas
+        this.$router.push({
+          name: 'quotation-create',
+          query: { edit: quotation.id }
+        })
+      } catch (error) {
+        console.error('❌ Error navegando a editar cotización:', error)
+        // Fallback: usar ruta completa
+        window.location.href = `/dashboard/cotizacion/nueva?edit=${quotation.id}`
+      }
+    },
+    
+    // ✅ NAVEGACIÓN CORREGIDA - DUPLICAR COTIZACIÓN
+    duplicateQuotation(quotation) {
+      console.log('📋 Duplicando cotización:', quotation.quotation_number)
+      try {
+        // Usar exactamente la misma navegación que funciona en otras vistas
+        this.$router.push({
+          name: 'quotation-create',
+          query: { duplicate: quotation.id }
+        })
+      } catch (error) {
+        console.error('❌ Error navegando a duplicar cotización:', error)
+        // Fallback: usar ruta completa
+        window.location.href = `/dashboard/cotizacion/nueva?duplicate=${quotation.id}`
+      }
+    },
+    
+    deleteQuotation(quotation) {
+      if (!this.canDeleteQuotation(quotation)) {
+        alert('No se puede eliminar esta cotización porque ya ha sido facturada.')
+        return
+      }
+      
+      this.quotationToDelete = quotation
+      this.showDeleteModal = true
+    },
+    
+    confirmDelete() {
+      if (this.quotationToDelete) {
+        console.log('🗑️ Eliminando:', this.quotationToDelete.quotation_number)
+        
+        const index = this.quotations.findIndex(q => q.id === this.quotationToDelete.id)
+        if (index > -1) {
+          this.quotations.splice(index, 1)
+          console.log('✅ Cotización eliminada exitosamente')
+        }
+        
+        this.cancelDelete()
+      }
+    },
+    
+    cancelDelete() {
+      this.showDeleteModal = false
+      this.quotationToDelete = null
+    },
+    
+    canEditQuotation(quotation) {
+      return !['facturada', 'aprobada'].includes(quotation.status)
+    },
+    
+    canDeleteQuotation(quotation) {
+      return !['facturada'].includes(quotation.status)
+    },
+    
+    getEditTooltip(quotation) {
+      if (this.canEditQuotation(quotation)) {
+        return 'Editar esta cotización'
+      }
+      return 'No se puede editar: cotización ya facturada o aprobada'
+    },
+    
+    getDeleteTooltip(quotation) {
+      if (this.canDeleteQuotation(quotation)) {
+        return 'Eliminar esta cotización'
+      }
+      return 'No se puede eliminar: cotización ya facturada'
+    },
+    
+    formatNumber(number) {
+      return new Intl.NumberFormat('es-CO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(number || 0)
+    },
+    
+    formatDate(dateString) {
+      if (!dateString) return ''
+      try {
+        return new Date(dateString).toLocaleDateString('es-CO', {
           year: 'numeric',
           month: 'short',
           day: 'numeric'
-        });
+        })
       } catch {
-        return dateString;
+        return dateString
       }
     },
-
-    formatCurrency(amount) {
-      if (!amount) return '0';
-      return parseFloat(amount).toLocaleString('es-CO', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      });
-    },
-
-    getTimeAgo(dateString) {
-      if (!dateString) return '';
+    
+    getRelativeTime(dateString) {
+      if (!dateString) return ''
       try {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffTime = Math.abs(now - date);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const date = new Date(dateString)
+        const now = new Date()
+        const diffTime = Math.abs(now - date)
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
         
-        if (diffDays === 1) return 'Hace 1 día';
-        if (diffDays < 30) return `Hace ${diffDays} días`;
-        if (diffDays < 365) return `Hace ${Math.floor(diffDays / 30)} meses`;
-        return `Hace ${Math.floor(diffDays / 365)} años`;
+        if (diffDays === 1) return 'Hace 1 día'
+        if (diffDays < 7) return `Hace ${diffDays} días`
+        if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`
+        if (diffDays < 365) return `Hace ${Math.floor(diffDays / 30)} meses`
+        return `Hace ${Math.floor(diffDays / 365)} años`
       } catch {
-        return '';
+        return ''
       }
     },
-
+    
+    formatDateRange() {
+      if (this.filters.dateFrom && this.filters.dateTo) {
+        return `${this.formatDate(this.filters.dateFrom)} - ${this.formatDate(this.filters.dateTo)}`
+      } else if (this.filters.dateFrom) {
+        return `Desde ${this.formatDate(this.filters.dateFrom)}`
+      } else if (this.filters.dateTo) {
+        return `Hasta ${this.formatDate(this.filters.dateTo)}`
+      }
+      return ''
+    },
+    
+    getStatusIcon(status) {
+      const icons = {
+        borrador: '📝',
+        enviada: '📤',
+        aprobada: '✅',
+        facturada: '🧾',
+        rechazada: '❌',
+        vencida: '⏰'
+      }
+      return icons[status] || '❓'
+    },
+    
     getStatusText(status) {
-      const statusMap = {
-        'borrador': 'Borrador',
-        'enviada': 'Enviada',
-        'aprobada': 'Aprobada',
-        'rechazada': 'Rechazada',
-      };
-      return statusMap[status] || status;
-    },
-  },
-
-  // Watchers para reactividad
-  watch: {
-    // Recalcular estadísticas cuando cambian las cotizaciones
-    quotations() {
-      this.calculateStats();
-    },
-
-    // Resetear página cuando cambian los filtros
-    filteredQuotations() {
-      if (this.currentPage > this.totalPages && this.totalPages > 0) {
-        this.currentPage = 1;
+      const texts = {
+        borrador: 'Borrador',
+        enviada: 'Enviada',
+        aprobada: 'Aprobada',
+        facturada: 'Facturada',
+        rechazada: 'Rechazada',
+        vencida: 'Vencida'
       }
+      return texts[status] || status
     },
+    
+    getAmountRangeText(range) {
+      const texts = {
+        '0-100000': 'Hasta $100,000',
+        '100000-500000': '$100,000 - $500,000',
+        '500000-1000000': '$500,000 - $1,000,000',
+        '1000000+': 'Más de $1,000,000'
+      }
+      return texts[range] || range
+    },
+    
+    async loadQuotationsFromBackend() {
+      this.isLoading = true
+      try {
+        console.log('🔄 Cargando cotizaciones...')
+        // Simular delay de red
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // TODO: Aquí irá la llamada real al backend cuando esté listo
+        // const axios = await import('@/services/axios')
+        // const response = await axios.get('/quotations/')
+        // this.quotations = response.data
+        
+        console.log('✅ Cotizaciones cargadas exitosamente')
+      } catch (error) {
+        console.error('❌ Error cargando cotizaciones:', error)
+      } finally {
+        this.isLoading = false
+      }
+    }
   },
+  
+  // ✅ DEBUG: Agregar logs para verificar funcionamiento
+  mounted() {
+    console.log('📍 QuotationHistoryView montado correctamente')
+    console.log('📍 Ruta actual:', this.$route.path)
+    console.log('📍 Router disponible:', !!this.$router)
+    console.log('📍 Rutas del router:', this.$router.getRoutes().map(r => r.name))
+  },
+  
+  async created() {
+    await this.loadQuotationsFromBackend()
+  }
 }
 </script>
+
 <style scoped>
-/* === CONTENEDOR PRINCIPAL === */
-.quotation-history {
+.quotation-history-workspace {
   width: 100%;
-  min-height: 100vh;
-  background: #f8f9fa;
-  padding: 2rem;
-  box-sizing: border-box;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
 }
 
-/* === ENCABEZADO DE LA PÁGINA === */
-.page-header {
-  background: white;
+/* Header */
+.history-header {
+  background: #003366;
+  color: white;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-radius: 0.75rem;
   margin-bottom: 2rem;
-  text-align: center;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
-.page-header h1 {
-  color: #2c3e50;
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.main-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  margin: 0.5rem 0 0;
+  opacity: 0.9;
+  color: white;
+}
+
+.stats-badge {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 0.5rem;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.badge-label {
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+.badge-number {
+  font-size: 1.5rem;
   font-weight: 700;
 }
 
-.page-header p {
-  color: #6c757d;
-  font-size: 1.1rem;
-  margin: 0;
+/* Panel Base */
+.filters-panel,
+.results-panel {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  border: 1px solid #e2e8f0;
 }
 
-/* === PANEL DE BÚSQUEDA === */
-.search-panel {
+.panel-header {
+  background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 0.75rem 0.75rem 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Botones */
+.btn-clear,
+.btn-toggle,
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-new-quotation {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.btn-clear {
   background: white;
+  color: #e74c3c;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-toggle {
+  background: white;
+  color: #3498db;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-primary {
+  background: #003366;
+  color: white;
+}
+
+.btn-secondary {
+  background: #64748b;
+  color: white;
+}
+
+.btn-danger {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-new-quotation {
+  background: #27ae60;
+  color: white;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Filtros */
+.filters-content {
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.quick-search {
   margin-bottom: 2rem;
 }
 
-.search-row {
+.search-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.search-field label {
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-input,
+.filter-input,
+.filter-select {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus,
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: #003366;
+  box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+}
+
+.field-help {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.specific-filters {
+  margin-bottom: 2rem;
+}
+
+.filter-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
 
-.search-group {
+.filter-field {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
 }
 
-.search-group label {
+.filter-field label {
   font-weight: 600;
-  color: #495057;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Filtros Activos */
+.active-filters {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.filters-label {
+  font-weight: 600;
+  color: #2c3e50;
   margin-bottom: 0.5rem;
-  font-size: 0.9rem;
+  display: block;
 }
 
-.search-input, .search-select, .date-input {
-  padding: 0.75rem;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+.filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.search-input:focus, .search-select:focus, .date-input:focus {
-  outline: none;
-  border-color: #409eff;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+.filter-tag {
+  background: #003366;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.clear-filters-btn {
-  background: #e74c3c;
+.tag-remove {
+  background: rgba(255, 255, 255, 0.2);
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  border-radius: 50%;
+  width: 1.2rem;
+  height: 1.2rem;
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-  margin-top: auto;
-  transition: background 0.3s ease, transform 0.2s ease;
-}
-
-.clear-filters-btn:hover {
-  background: #c0392b;
-  transform: translateY(-1px);
-}
-
-.date-filters {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e9ecef;
-}
-
-.date-group {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  transition: background 0.3s ease;
 }
 
-/* === PANEL DE ESTADÍSTICAS === */
+.tag-remove:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Estadísticas */
 .stats-panel {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -728,65 +1228,104 @@ export default {
 
 .stat-card {
   background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  text-align: center;
-  border-left: 4px solid #409eff;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #e2e8f0;
+  transition: transform 0.3s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
-.stat-card h3 {
+.stat-card.borrador {
+  border-left: 4px solid #f39c12;
+}
+
+.stat-card.enviada {
+  border-left: 4px solid #3498db;
+}
+
+.stat-card.aprobada {
+  border-left: 4px solid #27ae60;
+}
+
+.stat-card.total {
+  border-left: 4px solid #003366;
+}
+
+.stat-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-icon {
   font-size: 2rem;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 1.5rem;
   font-weight: 700;
   color: #2c3e50;
-  margin-bottom: 0.5rem;
 }
 
-.stat-card p {
-  color: #6c757d;
-  font-size: 0.9rem;
-  margin: 0;
-  font-weight: 500;
+.stat-label {
+  font-size: 0.875rem;
+  color: #64748b;
 }
 
-.stat-card:nth-child(2) {
-  border-left-color: #f39c12;
+/* Panel de Resultados */
+.panel-content {
+  padding: 2rem;
 }
 
-.stat-card:nth-child(3) {
-  border-left-color: #27ae60;
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.stat-card:nth-child(4) {
-  border-left-color: #8e44ad;
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
 }
 
-/* === CONTENEDOR DE TABLA === */
-.table-container {
+.sort-select {
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+}
+
+.sort-direction-btn {
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  overflow: hidden;
-  margin-bottom: 2rem;
+  cursor: pointer;
+  font-size: 1rem;
 }
 
-/* === ESTADOS DE CARGA, ERROR Y VACÍO === */
-.loading-state, .error-state, .empty-state {
-  padding: 3rem;
+/* Estados */
+.loading-state,
+.empty-state {
   text-align: center;
+  padding: 3rem;
 }
 
-.loading-state .spinner {
+.loading-spinner {
   width: 40px;
   height: 40px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #409eff;
+  border-top: 4px solid #003366;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
@@ -797,97 +1336,38 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-.error-state h3 {
-  color: #e74c3c;
-  margin-bottom: 1rem;
-}
-
-.retry-btn {
-  background: #409eff;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  margin-top: 1rem;
-  transition: background 0.3s ease;
-}
-
-.retry-btn:hover {
-  background: #3a8ee6;
-}
-
-.empty-state .empty-icon {
+.empty-icon {
   font-size: 4rem;
-  margin-bottom: 1rem;
   opacity: 0.5;
-}
-
-.empty-state h3 {
-  color: #6c757d;
   margin-bottom: 1rem;
 }
 
-.create-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 25px;
-  cursor: pointer;
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-top: 1rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.create-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-}
-
-/* === TABLA === */
-.table-wrapper {
+/* Tabla */
+.quotations-table-wrapper {
   overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
 }
 
 .quotations-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .quotations-table th {
-  background: #f8f9fa;
-  padding: 1rem;
+  background: linear-gradient(145deg, #f1f3f4, #e8eaed);
+  padding: 1rem 0.75rem;
   text-align: left;
   font-weight: 600;
   color: #2c3e50;
-  border-bottom: 2px solid #e9ecef;
-  white-space: nowrap;
-}
-
-.quotations-table th.sortable {
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.3s ease;
-  position: relative;
-}
-
-.quotations-table th.sortable:hover {
-  background: #e9ecef;
-}
-
-.sort-indicator {
-  margin-left: 0.5rem;
-  font-size: 0.8rem;
-  color: #409eff;
+  border-bottom: 2px solid #e2e8f0;
+  font-size: 0.875rem;
 }
 
 .quotations-table td {
-  padding: 1rem;
-  border-bottom: 1px solid #e9ecef;
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
   vertical-align: middle;
 }
 
@@ -895,74 +1375,103 @@ export default {
   background: #f8f9fa;
 }
 
-/* === CELDAS ESPECÍFICAS === */
-.quotation-number strong {
-  color: #409eff;
+/* Celdas */
+.quotation-number {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.number-text {
+  font-weight: 600;
+  color: #003366;
+}
+
+.number-id {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.client-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.client-name {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.client-email {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.date-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.date-created {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.date-relative {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.amount-value {
   font-weight: 700;
-}
-
-.client-info .client-name {
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 0.25rem;
-}
-
-.client-info .client-email {
-  color: #6c757d;
-  font-size: 0.85rem;
-}
-
-.date-info .create-date {
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 0.25rem;
-}
-
-.date-info .time-ago {
-  color: #6c757d;
-  font-size: 0.8rem;
-}
-
-.total-amount strong {
   color: #27ae60;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
-/* === BADGES DE ESTADO === */
+/* Status */
 .status-badge {
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 15px;
   font-size: 0.8rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .status-borrador {
-  background: #fef9e7;
+  background: rgba(243, 156, 18, 0.1);
   color: #f39c12;
   border: 1px solid #f39c12;
 }
 
 .status-enviada {
-  background: #e3f2fd;
-  color: #2196f3;
-  border: 1px solid #2196f3;
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
+  border: 1px solid #3498db;
 }
 
 .status-aprobada {
-  background: #e8f5e8;
+  background: rgba(39, 174, 96, 0.1);
   color: #27ae60;
   border: 1px solid #27ae60;
 }
 
+.status-facturada {
+  background: rgba(155, 89, 182, 0.1);
+  color: #9b59b6;
+  border: 1px solid #9b59b6;
+}
+
 .status-rechazada {
-  background: #ffebee;
+  background: rgba(231, 76, 60, 0.1);
   color: #e74c3c;
   border: 1px solid #e74c3c;
 }
 
-/* === BOTONES DE ACCIÓN === */
+/* Acciones */
 .action-buttons {
   display: flex;
   gap: 0.5rem;
@@ -970,279 +1479,198 @@ export default {
 }
 
 .action-btn {
-  padding: 0.5rem;
+  width: 2rem;
+  height: 2rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   cursor: pointer;
-  font-size: 1rem;
-  width: 36px;
-  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 0.9rem;
   transition: all 0.3s ease;
+}
+
+.view-btn {
+  background: #3498db;
+  color: white;
+}
+
+.edit-btn {
+  background: #f39c12;
+  color: white;
+}
+
+.duplicate-btn {
+  background: #9b59b6;
+  color: white;
+}
+
+.delete-btn {
+  background: #e74c3c;
+  color: white;
+}
+
+.action-btn:hover:not(:disabled) {
+  transform: scale(1.1);
 }
 
 .action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.view-btn {
-  background: #17a2b8;
-  color: white;
-}
-
-.view-btn:hover:not(:disabled) {
-  background: #138496;
-  transform: scale(1.1);
-}
-
-.edit-btn {
-  background: #ffc107;
-  color: #212529;
-}
-
-.edit-btn:hover:not(:disabled) {
-  background: #e0a800;
-  transform: scale(1.1);
-}
-
-.duplicate-btn {
-  background: #6f42c1;
-  color: white;
-}
-
-.duplicate-btn:hover {
-  background: #5a32a3;
-  transform: scale(1.1);
-}
-
-.pdf-btn {
-  background: #dc3545;
-  color: white;
-}
-
-.pdf-btn:hover {
-  background: #c82333;
-  transform: scale(1.1);
-}
-
-/* === PAGINACIÓN === */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  padding: 2rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.page-btn {
-  background: #409eff;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background 0.3s ease, transform 0.2s ease;
-}
-
-.page-btn:hover:not(:disabled) {
-  background: #3a8ee6;
-  transform: translateY(-1px);
-}
-
-.page-btn:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
   transform: none;
 }
 
-.page-info {
-  color: #6c757d;
+/* Paginación */
+.pagination-panel {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.page-btn {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: #003366;
+  color: white;
+  border-color: #003366;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-current {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.items-per-page {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.items-select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 0.75rem;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.modal-body {
+  padding: 2rem;
+}
+
+.warning-text {
+  color: #e74c3c;
   font-weight: 500;
-  text-align: center;
-  min-width: 200px;
+  margin-top: 1rem;
 }
 
-/* === RESPONSIVE DESIGN === */
-@media (max-width: 1200px) {
-  .search-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .stats-panel {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.modal-actions {
+  padding: 1rem 2rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
 }
 
+/* Responsive */
 @media (max-width: 768px) {
-  .quotation-history {
-    padding: 1rem;
-  }
-  
-  .page-header {
-    padding: 1.5rem;
-  }
-  
-  .page-header h1 {
-    font-size: 2rem;
-  }
-  
-  .search-panel {
-    padding: 1.5rem;
-  }
-  
-  .search-row {
-    grid-template-columns: 1fr;
+  .header-content {
+    flex-direction: column;
+    text-align: center;
     gap: 1rem;
   }
   
-  .date-filters {
+  .panel-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .filter-row {
     grid-template-columns: 1fr;
   }
   
   .stats-panel {
     grid-template-columns: 1fr;
+  }
+  
+  .panel-actions {
+    flex-direction: column;
     gap: 1rem;
   }
   
-  .stat-card {
-    padding: 1rem;
-  }
-  
-  .stat-card h3 {
-    font-size: 1.5rem;
+  .pagination-panel {
+    flex-direction: column;
+    gap: 1rem;
   }
   
   .quotations-table {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
   
   .quotations-table th,
   .quotations-table td {
-    padding: 0.75rem 0.5rem;
+    padding: 0.5rem;
   }
   
   .action-buttons {
     flex-direction: column;
     gap: 0.25rem;
-  }
-  
-  .action-btn {
-    width: 100%;
-    height: 32px;
-  }
-  
-  .pagination {
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 1rem;
-  }
-  
-  .page-info {
-    min-width: auto;
-    text-align: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .page-header h1 {
-    font-size: 1.5rem;
-  }
-  
-  .search-panel,
-  .table-container {
-    margin-bottom: 1rem;
-  }
-  
-  .quotations-table th,
-  .quotations-table td {
-    padding: 0.5rem 0.25rem;
-  }
-  
-  /* Ocultar columnas menos importantes en móviles muy pequeños */
-  .quotations-table .date-info,
-  .quotations-table th:nth-child(3) {
-    display: none;
-  }
-}
-
-/* === ANIMACIONES === */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.quotation-row {
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-/* === UTILIDADES === */
-.text-center {
-  text-align: center;
-}
-
-.text-muted {
-  color: #6c757d;
-}
-
-.font-weight-bold {
-  font-weight: 700;
-}
-
-.mb-0 {
-  margin-bottom: 0;
-}
-
-.mt-1 {
-  margin-top: 0.25rem;
-}
-
-/* === MEJORAS DE ACCESIBILIDAD === */
-.action-btn:focus {
-  outline: 2px solid #409eff;
-  outline-offset: 2px;
-}
-
-.page-btn:focus {
-  outline: 2px solid #409eff;
-  outline-offset: 2px;
-}
-
-.search-input:focus,
-.search-select:focus,
-.date-input:focus {
-  outline: none;
-  border-color: #409eff;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
-}
-
-/* === PRINT STYLES === */
-@media print {
-  .search-panel,
-  .pagination,
-  .action-buttons {
-    display: none;
-  }
-  
-  .quotation-history {
-    background: white;
-    padding: 0;
-  }
-  
-  .table-container {
-    box-shadow: none;
   }
 }
 </style>
