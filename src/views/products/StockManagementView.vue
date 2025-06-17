@@ -20,14 +20,14 @@
 
     <!-- Selector de Operación -->
     <div class="operation-tabs">
-      <button 
+      <button
         :class="['tab-button', { active: currentOperation === 'create' }]"
         @click="switchOperation('create')"
       >
         <span class="tab-icon">➕</span>
         <span class="tab-text">Crear Producto</span>
       </button>
-      <button 
+      <button
         :class="['tab-button', { active: currentOperation === 'stock' }]"
         @click="switchOperation('stock')"
       >
@@ -45,7 +45,12 @@
             <span class="btn-icon">🔄</span>
             Limpiar
           </button>
-          <button type="button" class="btn-primary" @click="addProductToList" :disabled="!isProductFormValid">
+          <button
+            type="button"
+            class="btn-primary"
+            @click="addProductToList"
+            :disabled="!isProductFormValid"
+          >
             <span class="btn-icon">✅</span>
             Agregar a Lista
           </button>
@@ -61,43 +66,46 @@
                 <div class="form-field">
                   <label for="productCode">
                     <span class="field-icon">🏷️</span>
-                    Código del Producto *
+                    {{ productLabels.code }}
                   </label>
-                  <input 
-                    type="text" 
-                    id="productCode" 
-                    v-model="productForm.codigo" 
-                    placeholder="Ej: PROD-001"
-                    required 
-                    :class="{ 'error': validationErrors.codigo }"
+                  <input
+                    type="text"
+                    id="productCode"
+                    v-model="productForm.code"
+                    placeholder="Ej: PROD-001 (Se autogenera si está vacío)"
+                    :class="{ error: validationErrors.code }"
                   />
-                  <span v-if="validationErrors.codigo" class="error-message">{{ validationErrors.codigo }}</span>
+                  <span v-if="validationErrors.code" class="error-message">{{
+                    validationErrors.code
+                  }}</span>
                 </div>
                 <div class="form-field">
                   <label for="productName">
                     <span class="field-icon">📝</span>
-                    Nombre del Producto *
+                    {{ productLabels.name }} *
                   </label>
-                  <input 
-                    type="text" 
-                    id="productName" 
-                    v-model="productForm.nombre" 
+                  <input
+                    type="text"
+                    id="productName"
+                    v-model="productForm.name"
                     placeholder="Ej: Laptop Gaming XYZ"
                     required
-                    :class="{ 'error': validationErrors.nombre }"
+                    :class="{ error: validationErrors.name }"
                   />
-                  <span v-if="validationErrors.nombre" class="error-message">{{ validationErrors.nombre }}</span>
+                  <span v-if="validationErrors.name" class="error-message">{{
+                    validationErrors.name
+                  }}</span>
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-field full-width">
                   <label for="productDescription">
                     <span class="field-icon">📄</span>
-                    Descripción
+                    {{ productLabels.description }}
                   </label>
-                  <textarea 
-                    id="productDescription" 
-                    v-model="productForm.descripcion"
+                  <textarea
+                    id="productDescription"
+                    v-model="productForm.description"
                     placeholder="Descripción detallada del producto..."
                     rows="3"
                   ></textarea>
@@ -112,14 +120,9 @@
                 <div class="form-field">
                   <label for="category">
                     <span class="field-icon">📂</span>
-                    Categoría *
+                    {{ productLabels.category }}
                   </label>
-                  <select 
-                    id="category" 
-                    v-model="productForm.categoria" 
-                    required
-                    :class="{ 'error': validationErrors.categoria }"
-                  >
+                  <select id="category" v-model="productForm.category">
                     <option value="">Seleccionar categoría</option>
                     <option value="Electrónicos">Electrónicos</option>
                     <option value="Ropa">Ropa y Accesorios</option>
@@ -130,49 +133,32 @@
                     <option value="Automotriz">Automotriz</option>
                     <option value="Oficina">Oficina y Papelería</option>
                   </select>
-                  <span v-if="validationErrors.categoria" class="error-message">{{ validationErrors.categoria }}</span>
                 </div>
                 <div class="form-field">
-                  <label for="subcategory">
-                    <span class="field-icon">📁</span>
-                    Subcategoría
+                  <label for="brand">
+                    <span class="field-icon">🏢</span>
+                    {{ productLabels.brand }}
                   </label>
-                  <input 
-                    type="text" 
-                    id="subcategory" 
-                    v-model="productForm.subcategoria"
-                    placeholder="Ej: Gaming, Portátiles..."
+                  <input
+                    type="text"
+                    id="brand"
+                    v-model="productForm.brand"
+                    placeholder="Ej: Dell, Samsung..."
                   />
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-field">
-                  <label for="brand">
-                    <span class="field-icon">🏢</span>
-                    Marca
+                  <label for="supplier">
+                    <span class="field-icon">🏭</span>
+                    {{ productLabels.supplier }}
                   </label>
-                  <input 
-                    type="text" 
-                    id="brand" 
-                    v-model="productForm.marca"
-                    placeholder="Ej: Dell, Samsung..."
+                  <input
+                    type="text"
+                    id="supplier"
+                    v-model="productForm.supplier"
+                    placeholder="Nombre del proveedor"
                   />
-                </div>
-                <div class="form-field">
-                  <label for="origin">
-                    <span class="field-icon">🌍</span>
-                    País de Origen
-                  </label>
-                  <select id="origin" v-model="productForm.paisOrigen">
-                    <option value="">Seleccionar país</option>
-                    <option value="Colombia">Colombia</option>
-                    <option value="Estados Unidos">Estados Unidos</option>
-                    <option value="China">China</option>
-                    <option value="Alemania">Alemania</option>
-                    <option value="Japón">Japón</option>
-                    <option value="México">México</option>
-                    <option value="Brasil">Brasil</option>
-                  </select>
                 </div>
               </div>
             </div>
@@ -184,63 +170,39 @@
                 <div class="form-field">
                   <label for="unitPrice">
                     <span class="field-icon">💰</span>
-                    Precio Unitario *
+                    {{ productLabels.unit_price }} *
                   </label>
                   <div class="currency-input">
                     <span class="currency-symbol">$</span>
-                    <input 
-                      type="number" 
-                      id="unitPrice" 
-                      v-model.number="productForm.precioUnitario"
+                    <input
+                      type="number"
+                      id="unitPrice"
+                      v-model.number="productForm.unit_price"
                       placeholder="0.00"
-                      min="0"
+                      min="0.01"
                       step="0.01"
                       required
-                      :class="{ 'error': validationErrors.precioUnitario }"
+                      :class="{ error: validationErrors.unit_price }"
                     />
                   </div>
-                  <span v-if="validationErrors.precioUnitario" class="error-message">{{ validationErrors.precioUnitario }}</span>
+                  <span v-if="validationErrors.unit_price" class="error-message">{{
+                    validationErrors.unit_price
+                  }}</span>
                 </div>
-                <div class="form-field">
-                  <label for="taxPercentage">
-                    <span class="field-icon">📊</span>
-                    Porcentaje de Impuesto (%)
-                  </label>
-                  <input 
-                    type="number" 
-                    id="taxPercentage" 
-                    v-model.number="productForm.porcentajeImpuesto"
-                    placeholder="19"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                  />
-                </div>
-              </div>
-              <div class="form-row">
                 <div class="form-field">
                   <label for="profitMargin">
                     <span class="field-icon">📈</span>
-                    Margen de Ganancia (%)
+                    {{ productLabels.profit_margin }}
                   </label>
-                  <input 
-                    type="number" 
-                    id="profitMargin" 
-                    v-model.number="productForm.margenGanancia"
-                    placeholder="25"
+                  <input
+                    type="number"
+                    id="profitMargin"
+                    v-model.number="productForm.profit_margin"
+                    placeholder="0"
                     min="0"
                     max="100"
                     step="0.01"
                   />
-                </div>
-                <div class="form-field">
-                  <label>
-                    <span class="field-icon">💵</span>
-                    Precio Final Calculado
-                  </label>
-                  <div class="calculated-price">
-                    ${{ formatNumber(calculatedFinalPrice) }}
-                  </div>
                 </div>
               </div>
             </div>
@@ -252,29 +214,31 @@
                 <div class="form-field">
                   <label for="initialStock">
                     <span class="field-icon">📦</span>
-                    Stock Inicial *
+                    {{ productLabels.stock_quantity }} *
                   </label>
-                  <input 
-                    type="number" 
-                    id="initialStock" 
-                    v-model.number="productForm.stockInicial"
+                  <input
+                    type="number"
+                    id="initialStock"
+                    v-model.number="productForm.stock_quantity"
                     placeholder="0"
                     min="0"
                     required
-                    :class="{ 'error': validationErrors.stockInicial }"
+                    :class="{ error: validationErrors.stock_quantity }"
                   />
-                  <span v-if="validationErrors.stockInicial" class="error-message">{{ validationErrors.stockInicial }}</span>
+                  <span v-if="validationErrors.stock_quantity" class="error-message">{{
+                    validationErrors.stock_quantity
+                  }}</span>
                 </div>
                 <div class="form-field">
                   <label for="minStock">
                     <span class="field-icon">⚠️</span>
-                    Stock Mínimo
+                    {{ productLabels.min_stock }}
                   </label>
-                  <input 
-                    type="number" 
-                    id="minStock" 
-                    v-model.number="productForm.stockMinimo"
-                    placeholder="5"
+                  <input
+                    type="number"
+                    id="minStock"
+                    v-model.number="productForm.min_stock"
+                    placeholder="0"
                     min="0"
                   />
                 </div>
@@ -283,26 +247,34 @@
                 <div class="form-field">
                   <label for="warehouseLocation">
                     <span class="field-icon">📍</span>
-                    Ubicación en Almacén
+                    {{ productLabels.warehouse_location }}
                   </label>
-                  <input 
-                    type="text" 
-                    id="warehouseLocation" 
-                    v-model="productForm.ubicacionAlmacen"
+                  <input
+                    type="text"
+                    id="warehouseLocation"
+                    v-model="productForm.warehouse_location"
                     placeholder="Ej: A-01-15"
                   />
                 </div>
                 <div class="form-field">
                   <label for="productStatus">
                     <span class="field-icon">🔄</span>
-                    Estado del Producto
+                    {{ productLabels.product_status }} *
                   </label>
-                  <select id="productStatus" v-model="productForm.estadoProducto">
-                    <option value="activo">Activo</option>
-                    <option value="inactivo">Inactivo</option>
-                    <option value="descontinuado">Descontinuado</option>
-                    <option value="pendiente">Pendiente</option>
+                  <select
+                    id="productStatus"
+                    v-model="productForm.product_status"
+                    required
+                    :class="{ error: validationErrors.product_status }"
+                  >
+                    <option value="active">Activo</option>
+                    <option value="inactive">Inactivo</option>
+                    <option value="discontinued">Descontinuado</option>
+                    <option value="pending">Pendiente</option>
                   </select>
+                  <span v-if="validationErrors.product_status" class="error-message">{{
+                    validationErrors.product_status
+                  }}</span>
                 </div>
               </div>
             </div>
@@ -314,27 +286,25 @@
                 <div class="form-field">
                   <label for="weight">
                     <span class="field-icon">⚖️</span>
-                    Peso (kg)
+                    {{ productLabels.weight }}
                   </label>
-                  <input 
-                    type="number" 
-                    id="weight" 
-                    v-model.number="productForm.peso"
-                    placeholder="0.0"
-                    min="0"
-                    step="0.01"
+                  <input
+                    type="text"
+                    id="weight"
+                    v-model="productForm.weight"
+                    placeholder="1.5 kg"
                   />
                 </div>
                 <div class="form-field">
                   <label for="dimensions">
                     <span class="field-icon">📏</span>
-                    Dimensiones (LxAxH cm)
+                    {{ productLabels.dimensions }}
                   </label>
-                  <input 
-                    type="text" 
-                    id="dimensions" 
-                    v-model="productForm.dimensiones"
-                    placeholder="Ej: 30x20x15"
+                  <input
+                    type="text"
+                    id="dimensions"
+                    v-model="productForm.dimensions"
+                    placeholder="Ej: 30x20x15 cm"
                   />
                 </div>
               </div>
@@ -353,7 +323,12 @@
             <span class="btn-icon">🔄</span>
             Limpiar
           </button>
-          <button type="button" class="btn-primary" @click="addStockToList" :disabled="!isStockFormValid">
+          <button
+            type="button"
+            class="btn-primary"
+            @click="addStockToList"
+            :disabled="!isStockFormValid"
+          >
             <span class="btn-icon">✅</span>
             Agregar a Lista
           </button>
@@ -370,17 +345,19 @@
                     <span class="field-icon">🏷️</span>
                     Código del Producto *
                   </label>
-                  <input 
-                    type="text" 
-                    id="stockProductCode" 
+                  <input
+                    type="text"
+                    id="stockProductCode"
                     v-model="stockForm.codigoProducto"
                     placeholder="Buscar por código..."
                     required
                     @input="searchExistingProduct"
-                    :class="{ 'error': validationErrors.codigoProducto }"
+                    :class="{ error: validationErrors.codigoProducto }"
                   />
-                  <span v-if="validationErrors.codigoProducto" class="error-message">{{ validationErrors.codigoProducto }}</span>
-                  
+                  <span v-if="validationErrors.codigoProducto" class="error-message">{{
+                    validationErrors.codigoProducto
+                  }}</span>
+
                   <!-- Información del producto encontrado -->
                   <div v-if="foundProduct" class="product-info">
                     <div class="product-card">
@@ -402,11 +379,11 @@
                     <span class="field-icon">🔄</span>
                     Tipo de Operación *
                   </label>
-                  <select 
-                    id="stockAction" 
-                    v-model="stockForm.tipoOperacion" 
+                  <select
+                    id="stockAction"
+                    v-model="stockForm.tipoOperacion"
                     required
-                    :class="{ 'error': validationErrors.tipoOperacion }"
+                    :class="{ error: validationErrors.tipoOperacion }"
                   >
                     <option value="">Seleccionar operación</option>
                     <option value="entrada">➕ Entrada de Stock</option>
@@ -414,23 +391,27 @@
                     <option value="ajuste">🔧 Ajuste de Inventario</option>
                     <option value="devolucion">↩️ Devolución</option>
                   </select>
-                  <span v-if="validationErrors.tipoOperacion" class="error-message">{{ validationErrors.tipoOperacion }}</span>
+                  <span v-if="validationErrors.tipoOperacion" class="error-message">{{
+                    validationErrors.tipoOperacion
+                  }}</span>
                 </div>
                 <div class="form-field">
                   <label for="stockQuantity">
                     <span class="field-icon">🔢</span>
                     Cantidad *
                   </label>
-                  <input 
-                    type="number" 
-                    id="stockQuantity" 
+                  <input
+                    type="number"
+                    id="stockQuantity"
                     v-model.number="stockForm.cantidad"
                     placeholder="0"
                     min="1"
                     required
-                    :class="{ 'error': validationErrors.cantidad }"
+                    :class="{ error: validationErrors.cantidad }"
                   />
-                  <span v-if="validationErrors.cantidad" class="error-message">{{ validationErrors.cantidad }}</span>
+                  <span v-if="validationErrors.cantidad" class="error-message">{{
+                    validationErrors.cantidad
+                  }}</span>
                 </div>
               </div>
               <div class="form-row">
@@ -439,8 +420,8 @@
                     <span class="field-icon">📝</span>
                     Motivo de la Operación
                   </label>
-                  <textarea 
-                    id="stockReason" 
+                  <textarea
+                    id="stockReason"
                     v-model="stockForm.motivo"
                     placeholder="Ej: Recepción de mercancía, venta, daño, etc..."
                     rows="2"
@@ -457,9 +438,9 @@
                     <span class="field-icon">⚠️</span>
                     Nuevo Stock Mínimo
                   </label>
-                  <input 
-                    type="number" 
-                    id="newMinStock" 
+                  <input
+                    type="number"
+                    id="newMinStock"
                     v-model.number="stockForm.nuevoStockMinimo"
                     placeholder="Mantener actual"
                     min="0"
@@ -470,9 +451,9 @@
                     <span class="field-icon">📍</span>
                     Nueva Ubicación
                   </label>
-                  <input 
-                    type="text" 
-                    id="newLocation" 
+                  <input
+                    type="text"
+                    id="newLocation"
                     v-model="stockForm.nuevaUbicacion"
                     placeholder="Mantener actual"
                   />
@@ -484,9 +465,14 @@
                     <span class="field-icon">📊</span>
                     Stock Resultante
                   </label>
-                  <div class="calculated-stock" :class="getStockStatusClass(calculatedResultingStock)">
+                  <div
+                    class="calculated-stock"
+                    :class="getStockStatusClass(calculatedResultingStock)"
+                  >
                     {{ calculatedResultingStock }} unidades
-                    <span class="stock-status">{{ getStockStatusText(calculatedResultingStock) }}</span>
+                    <span class="stock-status">{{
+                      getStockStatusText(calculatedResultingStock)
+                    }}</span>
                   </div>
                 </div>
               </div>
@@ -536,24 +522,30 @@
                   </span>
                 </td>
                 <td class="col-code">
-                  <span class="product-code">{{ operation.codigo }}</span>
+                  <span class="product-code">{{ operation.code }}</span>
                 </td>
                 <td class="col-name">
                   <div class="product-info-cell">
-                    <span class="product-name">{{ operation.nombre || 'Nuevo Producto' }}</span>
-                    <span v-if="operation.categoria" class="product-category">{{ operation.categoria }}</span>
+                    <span class="product-name">{{ operation.name || 'Nuevo Producto' }}</span>
+                    <span v-if="operation.category" class="product-category">{{
+                      operation.category
+                    }}</span>
                   </div>
                 </td>
                 <td class="col-details">
                   <div class="operation-details">
                     <div v-if="operation.tipo === 'crear'">
-                      <span class="detail-item">💰 ${{ formatNumber(operation.precioUnitario) }}</span>
-                      <span class="detail-item">📦 {{ operation.stockInicial }} unidades</span>
+                      <span class="detail-item">💰 ${{ formatNumber(operation.unit_price) }}</span>
+                      <span class="detail-item">📦 {{ operation.stock_quantity }} unidades</span>
                     </div>
                     <div v-else>
-                      <span class="detail-item">{{ getOperationText(operation.tipoOperacion) }}</span>
+                      <span class="detail-item">{{
+                        getOperationText(operation.tipoOperacion)
+                      }}</span>
                       <span class="detail-item">{{ operation.cantidad }} unidades</span>
-                      <span v-if="operation.motivo" class="detail-item">{{ operation.motivo }}</span>
+                      <span v-if="operation.motivo" class="detail-item">{{
+                        operation.motivo
+                      }}</span>
                     </div>
                   </div>
                 </td>
@@ -564,9 +556,7 @@
                   </span>
                 </td>
                 <td class="col-actions">
-                  <button class="btn-edit" @click="editOperation(index)" title="Editar">
-                    ✏️
-                  </button>
+                  <button class="btn-edit" @click="editOperation(index)" title="Editar">✏️</button>
                   <button class="btn-delete" @click="removeOperation(index)" title="Eliminar">
                     🗑️
                   </button>
@@ -601,7 +591,7 @@
             <span class="stat-label">Total</span>
           </div>
         </div>
-        
+
         <div v-if="failedOperations > 0" class="error-details">
           <h4>Operaciones con Errores:</h4>
           <ul>
@@ -624,27 +614,43 @@ export default {
     return {
       currentOperation: 'create',
       isProcessing: false,
-      
-      // Formulario de creación de producto
+
+      // Formulario de creación de producto (CÓDIGO EN LUGAR DE SKU)
       productForm: {
-        codigo: '',
-        nombre: '',
-        descripcion: '',
-        categoria: '',
-        subcategoria: '',
-        marca: '',
-        paisOrigen: '',
-        precioUnitario: null,
-        porcentajeImpuesto: 19,
-        margenGanancia: 25,
-        stockInicial: null,
-        stockMinimo: 5,
-        ubicacionAlmacen: '',
-        estadoProducto: 'activo',
-        peso: null,
-        dimensiones: ''
+        code: '', // CAMBIO: era 'sku'
+        name: '',
+        description: '',
+        category: '',
+        brand: '',
+        supplier: '',
+        unit_price: null,
+        profit_margin: 25,
+        stock_quantity: null,
+        min_stock: 5,
+        warehouse_location: '',
+        weight: '',
+        dimensions: '',
+        product_status: 'active',
       },
-      
+
+      // Labels en español para la interfaz
+      productLabels: {
+        code: 'Código del Producto', // CAMBIO: era 'sku'
+        name: 'Nombre del Producto',
+        description: 'Descripción',
+        category: 'Categoría',
+        brand: 'Marca',
+        supplier: 'Proveedor',
+        unit_price: 'Precio Unitario ($)',
+        profit_margin: 'Margen de Ganancia (%)',
+        stock_quantity: 'Stock Inicial',
+        min_stock: 'Stock Mínimo',
+        warehouse_location: 'Ubicación en Almacén',
+        weight: 'Peso',
+        dimensions: 'Dimensiones',
+        product_status: 'Estado del Producto',
+      },
+
       // Formulario de gestión de stock
       stockForm: {
         codigoProducto: '',
@@ -652,15 +658,15 @@ export default {
         cantidad: null,
         motivo: '',
         nuevoStockMinimo: null,
-        nuevaUbicacion: ''
+        nuevaUbicacion: '',
       },
-      
+
       // Datos y estado
       operationsList: [],
       operationResults: [],
       foundProduct: null,
       validationErrors: {},
-      
+
       // Mock data para simulación
       mockProducts: [
         {
@@ -668,41 +674,41 @@ export default {
           nombre: 'Laptop Gaming XYZ',
           categoria: 'Electrónicos',
           stockActual: 25,
-          stockMinimo: 5
+          stockMinimo: 5,
         },
         {
           codigo: 'PROD-002',
           nombre: 'Mouse Inalámbrico Pro',
           categoria: 'Electrónicos',
           stockActual: 3,
-          stockMinimo: 10
+          stockMinimo: 10,
         },
         {
           codigo: 'PROD-003',
           nombre: 'Teclado Mecánico RGB',
           categoria: 'Electrónicos',
           stockActual: 15,
-          stockMinimo: 8
-        }
-      ]
+          stockMinimo: 8,
+        },
+      ],
     }
   },
-  
+
   computed: {
     totalOperations() {
       return this.operationsList.length
     },
-    
+
     isProductFormValid() {
       return !!(
-        this.productForm.codigo &&
-        this.productForm.nombre &&
-        this.productForm.categoria &&
-        this.productForm.precioUnitario > 0 &&
-        this.productForm.stockInicial >= 0
+        this.productForm.code && // CAMBIO: era 'sku'
+        this.productForm.name &&
+        this.productForm.category &&
+        this.productForm.unit_price > 0 &&
+        this.productForm.stock_quantity >= 0
       )
     },
-    
+
     isStockFormValid() {
       return !!(
         this.stockForm.codigoProducto &&
@@ -710,20 +716,13 @@ export default {
         this.stockForm.cantidad > 0
       )
     },
-    
-    calculatedFinalPrice() {
-      const basePrice = this.productForm.precioUnitario || 0
-      const tax = basePrice * (this.productForm.porcentajeImpuesto / 100)
-      const margin = basePrice * (this.productForm.margenGanancia / 100)
-      return basePrice + tax + margin
-    },
-    
+
     calculatedResultingStock() {
       if (!this.foundProduct || !this.stockForm.cantidad) return 0
-      
+
       const currentStock = this.foundProduct.stockActual
       const quantity = this.stockForm.cantidad
-      
+
       switch (this.stockForm.tipoOperacion) {
         case 'entrada':
         case 'devolucion':
@@ -736,152 +735,150 @@ export default {
           return currentStock
       }
     },
-    
+
     successfulOperations() {
-      return this.operationResults.filter(r => r.success).length
+      return this.operationResults.filter((r) => r.success).length
     },
-    
+
     failedOperations() {
-      return this.operationResults.filter(r => !r.success).length
-    }
+      return this.operationResults.filter((r) => !r.success).length
+    },
   },
-  
+
   methods: {
     // Cambio de operación
     switchOperation(operation) {
       this.currentOperation = operation
       this.clearValidationErrors()
     },
-    
+
     // Validaciones
     validateProductForm() {
       this.validationErrors = {}
-      
-      if (!this.productForm.codigo) {
-        this.validationErrors.codigo = 'El código es obligatorio'
+
+      if (!this.productForm.code) {
+        // CAMBIO: era 'sku'
+        this.validationErrors.code = 'El código es obligatorio'
       }
-      
-      if (!this.productForm.nombre) {
-        this.validationErrors.nombre = 'El nombre es obligatorio'
+
+      if (!this.productForm.name) {
+        this.validationErrors.name = 'El nombre es obligatorio'
       }
-      
-      if (!this.productForm.categoria) {
-        this.validationErrors.categoria = 'La categoría es obligatoria'
+
+      if (!this.productForm.category) {
+        this.validationErrors.category = 'La categoría es obligatoria'
       }
-      
-      if (!this.productForm.precioUnitario || this.productForm.precioUnitario <= 0) {
-        this.validationErrors.precioUnitario = 'El precio debe ser mayor a 0'
+
+      if (!this.productForm.unit_price || this.productForm.unit_price <= 0) {
+        this.validationErrors.unit_price = 'El precio debe ser mayor a 0'
       }
-      
-      if (this.productForm.stockInicial === null || this.productForm.stockInicial < 0) {
-        this.validationErrors.stockInicial = 'El stock inicial no puede ser negativo'
+
+      if (this.productForm.stock_quantity === null || this.productForm.stock_quantity < 0) {
+        this.validationErrors.stock_quantity = 'El stock inicial no puede ser negativo'
       }
-      
+
       // Verificar si el código ya existe
-      const existingProduct = this.operationsList.find(op => op.codigo === this.productForm.codigo)
+      const existingProduct = this.operationsList.find((op) => op.code === this.productForm.code)
       if (existingProduct) {
-        this.validationErrors.codigo = 'Ya existe una operación con este código'
+        this.validationErrors.code = 'Ya existe una operación con este código'
       }
-      
+
       return Object.keys(this.validationErrors).length === 0
     },
-    
+
     validateStockForm() {
       this.validationErrors = {}
-      
+
       if (!this.stockForm.codigoProducto) {
         this.validationErrors.codigoProducto = 'El código del producto es obligatorio'
       }
-      
+
       if (!this.stockForm.tipoOperacion) {
         this.validationErrors.tipoOperacion = 'Debe seleccionar un tipo de operación'
       }
-      
+
       if (!this.stockForm.cantidad || this.stockForm.cantidad <= 0) {
         this.validationErrors.cantidad = 'La cantidad debe ser mayor a 0'
       }
-      
+
       return Object.keys(this.validationErrors).length === 0
     },
-    
+
     clearValidationErrors() {
       this.validationErrors = {}
     },
-    
+
     // Gestión de productos
     addProductToList() {
       if (!this.validateProductForm()) return
-      
+
       const newProduct = {
         tipo: 'crear',
-        codigo: this.productForm.codigo,
-        nombre: this.productForm.nombre,
-        descripcion: this.productForm.descripcion,
-        categoria: this.productForm.categoria,
-        subcategoria: this.productForm.subcategoria,
-        marca: this.productForm.marca,
-        paisOrigen: this.productForm.paisOrigen,
-        precioUnitario: this.productForm.precioUnitario,
-        porcentajeImpuesto: this.productForm.porcentajeImpuesto,
-        margenGanancia: this.productForm.margenGanancia,
-        stockInicial: this.productForm.stockInicial,
-        stockMinimo: this.productForm.stockMinimo,
-        ubicacionAlmacen: this.productForm.ubicacionAlmacen,
-        estadoProducto: this.productForm.estadoProducto,
-        peso: this.productForm.peso,
-        dimensiones: this.productForm.dimensiones,
-        timestamp: new Date().toISOString()
+        // Usar 'code' en lugar de 'sku'
+        code: this.productForm.code, // CAMBIO: era 'sku'
+        name: this.productForm.name,
+        description: this.productForm.description,
+        category: this.productForm.category,
+        brand: this.productForm.brand,
+        supplier: this.productForm.supplier,
+        unit_price: this.productForm.unit_price,
+        profit_margin: this.productForm.profit_margin,
+        stock_quantity: this.productForm.stock_quantity,
+        min_stock: this.productForm.min_stock,
+        warehouse_location: this.productForm.warehouse_location,
+        weight: this.productForm.weight,
+        dimensions: this.productForm.dimensions,
+        product_status: this.productForm.product_status,
+        timestamp: new Date().toISOString(),
       }
-      
+
       this.operationsList.push(newProduct)
       this.clearProductForm()
-      console.log('✅ Producto agregado a la lista:', newProduct.nombre)
+      console.log('✅ Producto agregado a la lista:', newProduct.name)
     },
-    
+
     clearProductForm() {
       this.productForm = {
-        codigo: '',
-        nombre: '',
-        descripcion: '',
-        categoria: '',
-        subcategoria: '',
-        marca: '',
-        paisOrigen: '',
-        precioUnitario: null,
-        porcentajeImpuesto: 19,
-        margenGanancia: 25,
-        stockInicial: null,
-        stockMinimo: 5,
-        ubicacionAlmacen: '',
-        estadoProducto: 'activo',
-        peso: null,
-        dimensiones: ''
+        code: '', // CAMBIO: era 'sku'
+        name: '',
+        description: '',
+        category: '',
+        brand: '',
+        supplier: '',
+        unit_price: null,
+        profit_margin: 25,
+        stock_quantity: null,
+        min_stock: 5,
+        warehouse_location: '',
+        weight: '',
+        dimensions: '',
+        product_status: 'active',
       }
       this.clearValidationErrors()
     },
-    
+
     // Gestión de stock
     searchExistingProduct() {
       if (this.stockForm.codigoProducto.length < 3) {
         this.foundProduct = null
         return
       }
-      
+
       // Simular búsqueda en productos existentes
-      const product = this.mockProducts.find(p => 
-        p.codigo.toLowerCase().includes(this.stockForm.codigoProducto.toLowerCase())
+      const product = this.mockProducts.find((p) =>
+        p.codigo.toLowerCase().includes(this.stockForm.codigoProducto.toLowerCase()),
       )
-      
+
       this.foundProduct = product || null
-      
+
       if (this.foundProduct) {
         console.log('🔍 Producto encontrado:', this.foundProduct.nombre)
       }
     },
-    
+
     addStockToList() {
       if (!this.validateStockForm()) return
-      
+
       const stockOperation = {
         tipo: 'stock',
         codigo: this.stockForm.codigoProducto,
@@ -894,14 +891,14 @@ export default {
         nuevaUbicacion: this.stockForm.nuevaUbicacion,
         stockActual: this.foundProduct?.stockActual || 0,
         stockResultante: this.calculatedResultingStock,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       }
-      
+
       this.operationsList.push(stockOperation)
       this.clearStockForm()
       console.log('✅ Operación de stock agregada:', stockOperation.tipoOperacion)
     },
-    
+
     clearStockForm() {
       this.stockForm = {
         codigoProducto: '',
@@ -909,19 +906,35 @@ export default {
         cantidad: null,
         motivo: '',
         nuevoStockMinimo: null,
-        nuevaUbicacion: ''
+        nuevaUbicacion: '',
       }
       this.foundProduct = null
       this.clearValidationErrors()
     },
-    
+
     // Gestión de operaciones
     editOperation(index) {
       const operation = this.operationsList[index]
-      
+
       if (operation.tipo === 'crear') {
         this.currentOperation = 'create'
-        this.productForm = { ...operation }
+        // Mapear de vuelta al formulario
+        this.productForm = {
+          code: operation.code, // CAMBIO: era 'sku'
+          name: operation.name,
+          description: operation.description,
+          category: operation.category,
+          brand: operation.brand,
+          supplier: operation.supplier,
+          unit_price: operation.unit_price,
+          profit_margin: operation.profit_margin,
+          stock_quantity: operation.stock_quantity,
+          min_stock: operation.min_stock,
+          warehouse_location: operation.warehouse_location,
+          weight: operation.weight,
+          dimensions: operation.dimensions,
+          product_status: operation.product_status,
+        }
       } else {
         this.currentOperation = 'stock'
         this.stockForm = {
@@ -930,20 +943,20 @@ export default {
           cantidad: operation.cantidad,
           motivo: operation.motivo,
           nuevoStockMinimo: operation.nuevoStockMinimo,
-          nuevaUbicacion: operation.nuevaUbicacion
+          nuevaUbicacion: operation.nuevaUbicacion,
         }
         this.searchExistingProduct()
       }
-      
+
       this.removeOperation(index)
     },
-    
+
     removeOperation(index) {
       const operation = this.operationsList[index]
-      console.log('🗑️ Eliminando operación:', operation.codigo)
+      console.log('🗑️ Eliminando operación:', operation.code || operation.codigo)
       this.operationsList.splice(index, 1)
     },
-    
+
     clearAllOperations() {
       if (confirm('¿Está seguro de eliminar todas las operaciones pendientes?')) {
         this.operationsList = []
@@ -951,44 +964,42 @@ export default {
         console.log('🗑️ Todas las operaciones eliminadas')
       }
     },
-    
+
     // Ejecución de operaciones
     async executeAllOperations() {
       if (this.operationsList.length === 0) return
-      
+
       this.isProcessing = true
       this.operationResults = []
-      
+
       try {
         console.log('🚀 Ejecutando', this.operationsList.length, 'operaciones...')
-        
+
         for (const operation of this.operationsList) {
           try {
             // Simular procesamiento
             await this.simulateOperation(operation)
-            
+
             this.operationResults.push({
               success: true,
-              operacion: `${operation.tipo}: ${operation.codigo}`,
-              message: 'Operación completada exitosamente'
+              operacion: `${operation.tipo}: ${operation.code || operation.codigo}`,
+              message: 'Operación completada exitosamente',
             })
-            
           } catch (error) {
             this.operationResults.push({
               success: false,
-              operacion: `${operation.tipo}: ${operation.codigo}`,
-              error: error.message
+              operacion: `${operation.tipo}: ${operation.code || operation.codigo}`,
+              error: error.message,
             })
           }
         }
-        
+
         console.log('✅ Operaciones completadas:', this.successfulOperations, 'exitosas')
-        
+
         // Limpiar operaciones exitosas
-        this.operationsList = this.operationsList.filter((_, index) => 
-          !this.operationResults[index]?.success
+        this.operationsList = this.operationsList.filter(
+          (_, index) => !this.operationResults[index]?.success,
         )
-        
       } catch (error) {
         console.error('❌ Error ejecutando operaciones:', error)
         alert('Error al ejecutar las operaciones')
@@ -996,18 +1007,19 @@ export default {
         this.isProcessing = false
       }
     },
-    
+
     async simulateOperation(operation) {
       // Simular delay de red
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
       // Simular posibles errores
-      if (Math.random() < 0.1) { // 10% de probabilidad de error
+      if (Math.random() < 0.1) {
+        // 10% de probabilidad de error
         throw new Error('Error simulado de conexión')
       }
-      
+
       if (operation.tipo === 'crear') {
-        console.log('📝 Creando producto:', operation.nombre)
+        console.log('📝 Creando producto:', operation.name)
         // TODO: Aquí iría la llamada al API cuando conectes el backend:
         // const axios = await import('@/services/axios')
         // await axios.post('/products/', operation)
@@ -1018,15 +1030,15 @@ export default {
         // await axios.put(`/products/${operation.codigo}/stock`, operation)
       }
     },
-    
+
     // Utilidades
     formatNumber(number) {
       return new Intl.NumberFormat('es-CO', {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        maximumFractionDigits: 2,
       }).format(number || 0)
     },
-    
+
     getOperationIcon(tipo) {
       const icons = {
         crear: '🆕',
@@ -1034,11 +1046,11 @@ export default {
         entrada: '➕',
         salida: '➖',
         ajuste: '🔧',
-        devolucion: '↩️'
+        devolucion: '↩️',
       }
       return icons[tipo] || '📋'
     },
-    
+
     getOperationText(tipo) {
       const texts = {
         crear: 'Crear Producto',
@@ -1046,25 +1058,25 @@ export default {
         entrada: 'Entrada',
         salida: 'Salida',
         ajuste: 'Ajuste',
-        devolucion: 'Devolución'
+        devolucion: 'Devolución',
       }
       return texts[tipo] || tipo
     },
-    
+
     getStockStatusClass(stock) {
       if (stock <= 5) return 'critical'
       if (stock <= 20) return 'low'
       if (stock <= 50) return 'medium'
       return 'high'
     },
-    
+
     getStockStatusText(stock) {
       if (stock <= 5) return '(Crítico)'
       if (stock <= 20) return '(Bajo)'
       if (stock <= 50) return '(Medio)'
       return '(Alto)'
-    }
-  }
+    },
+  },
 }
 </script>
 
@@ -1648,30 +1660,30 @@ button:disabled {
     text-align: center;
     gap: 1rem;
   }
-  
+
   .operation-tabs {
     flex-direction: column;
   }
-  
+
   .tab-button {
     min-width: unset;
   }
-  
+
   .panel-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
   }
-  
+
   .form-actions,
   .panel-actions {
     justify-content: center;
   }
-  
+
   .operations-table {
     font-size: 0.8rem;
   }
-  
+
   .operations-table th,
   .operations-table td {
     padding: 0.5rem;
@@ -1682,15 +1694,15 @@ button:disabled {
   .stock-workspace {
     padding: 0.5rem;
   }
-  
+
   .stock-header {
     padding: 1rem;
   }
-  
+
   .panel-content {
     padding: 1rem;
   }
-  
+
   .form-section {
     padding: 1rem;
   }
